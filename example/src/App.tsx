@@ -16,6 +16,7 @@ type Row = {
 }
 
 function App() {
+  const [isEditing, setIsEditing] = useState(false)
   const [data, setData] = useState<Row[]>([
     { active: true, firstName: 'Elon', lastName: 'Musk' },
     { active: false, firstName: 'Jeff', lastName: 'Bezos' },
@@ -47,7 +48,13 @@ function App() {
         background: '#f3f3f3',
       }}
     >
-      <DataSheetGrid value={data} onChange={setData} columns={columns} />
+      <button onClick={() => setIsEditing((v) => !v)}>Toggle Edit</button>
+      <DataSheetGrid
+        value={data}
+        onChange={setData}
+        columns={columns}
+        isEditing={isEditing}
+      />
     </div>
   )
 }

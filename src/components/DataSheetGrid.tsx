@@ -1379,6 +1379,32 @@ export const DataSheetGrid = React.memo(
               } else {
                 setActiveCell((cell) => add(direction, cell))
                 setSelectionCell(null)
+
+                if (
+                  isEditing &&
+                  ['ArrowDown'].includes(event.key) &&
+                  activeCell.row == data.length - 1
+                ) {
+                  insertRowAfter(selection?.max.row || activeCell.row)
+                }
+
+                if (
+                  isEditing &&
+                  ['ArrowUp'].includes(event.key) &&
+                  activeCell.row == data.length - 1 &&
+                  data
+                    .slice(activeCell.row, activeCell.row + 1)
+                    .every((rowData, i) =>
+                      columns.every((column) =>
+                        column.isCellEmpty({
+                          rowData,
+                          rowIndex: i + activeCell.row,
+                        })
+                      )
+                    )
+                ) {
+                  deleteRows(activeCell.row)
+                }
               }
             }
             setEditing(false)
