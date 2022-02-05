@@ -1051,13 +1051,7 @@ export const DataSheetGrid = React.memo(
                 row = selectionCell.row
                 doNotScrollX = true
               }
-<<<<<<< HEAD
-              setSelectionCell({ col, row })
-              // setSelectionCell(null)
-=======
-
               setSelectionCell({ col, row, doNotScrollX, doNotScrollY })
->>>>>>> 4d039c3de5af80f45d09ea0cca96d0a98c809efc
             } else {
               setSelectionCell(null)
             }
@@ -1083,6 +1077,7 @@ export const DataSheetGrid = React.memo(
           setSelectionCell,
           selectionCell,
           data.length,
+          isEditing,
         ]
       )
       useDocumentEventListener('mousedown', onMouseDown)
@@ -1495,6 +1490,7 @@ export const DataSheetGrid = React.memo(
           setSelectionCell,
           stopEditing,
           hasStickyRightColumn,
+          isEditing,
         ]
       )
       useDocumentEventListener('keydown', onKeyDown)
