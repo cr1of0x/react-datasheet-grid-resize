@@ -56,6 +56,11 @@ const DEFAULT_DUPLICATE_ROW: DataSheetGridProps<any>['duplicateRow'] = ({
   rowData,
 }) => ({ ...rowData })
 
+type ScrollBehavior = {
+  doNotScrollX?: boolean
+  doNotScrollY?: boolean
+}
+
 // eslint-disable-next-line react/display-name
 export const DataSheetGrid = React.memo(
   React.forwardRef<DataSheetGridRef, DataSheetGridProps<any>>(
@@ -154,12 +159,14 @@ export const DataSheetGrid = React.memo(
       ] = useState<number | null>(null)
 
       // Highlighted cell, null when not focused
-      const [activeCell, setActiveCell] = useDeepEqualState<Cell | null>(null)
+      const [activeCell, setActiveCell] = useDeepEqualState<
+        (Cell & ScrollBehavior) | null
+      >(null)
 
       // The selection cell and the active cell are the two corners of the selection, null when nothing is selected
-      const [selectionCell, setSelectionCell] = useDeepEqualState<Cell | null>(
-        null
-      )
+      const [selectionCell, setSelectionCell] = useDeepEqualState<
+        (Cell & ScrollBehavior) | null
+      >(null)
 
       // Min and max of the current selection (rectangle defined by the active cell and the selection cell), null when nothing is selected
       const selection = useMemo<Selection | null>(() => {
@@ -336,7 +343,11 @@ export const DataSheetGrid = React.memo(
               },
             ]
           )
-          setActiveCell((a) => ({ col: a?.col || 0, row: row + count }))
+          setActiveCell((a) => ({
+            col: a?.col || 0,
+            row: row + count,
+            doNotScrollX: true,
+          }))
         },
         [createRow, lockRows, onChange, setActiveCell, setSelectionCell]
       )
@@ -365,10 +376,11 @@ export const DataSheetGrid = React.memo(
               },
             ]
           )
-          setActiveCell({ col: 0, row: rowMax + 1 })
+          setActiveCell({ col: 0, row: rowMax + 1, doNotScrollX: true })
           setSelectionCell({
             col: columns.length - (hasStickyRightColumn ? 3 : 2),
             row: 2 * rowMax - rowMin + 1,
+            doNotScrollX: true,
           })
           setEditing(false)
         },
@@ -385,27 +397,34 @@ export const DataSheetGrid = React.memo(
 
       // Scroll to any given cell making sure it is in view
       const scrollTo = useCallback(
-        (cell: Cell) => {
+        (cell: Cell & ScrollBehavior) => {
           if (!height || !width) {
             return
           }
 
-          // Align top
-          const topMax = cell.row * rowHeight
-          // Align bottom
-          const topMin =
-            (cell.row + 1) * rowHeight + headerRowHeight - height + 1
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const scrollTop = listRef.current?.state.scrollOffset as number
+          if (!cell.doNotScrollY) {
+            // Align top
+            const topMax = cell.row * rowHeight
+            // Align bottom
+            const topMin =
+              (cell.row + 1) * rowHeight + headerRowHeight - height + 1
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            const scrollTop = listRef.current?.state.scrollOffset as number
 
-          if (scrollTop > topMax) {
-            listRef.current?.scrollTo(topMax)
-          } else if (scrollTop < topMin) {
-            listRef.current?.scrollTo(topMin)
+            if (scrollTop > topMax) {
+              listRef.current?.scrollTo(topMax)
+            } else if (scrollTop < topMin) {
+              listRef.current?.scrollTo(topMin)
+            }
           }
 
-          if (columnRights && columnWidths && outerRef.current) {
+          if (
+            columnRights &&
+            columnWidths &&
+            outerRef.current &&
+            !cell.doNotScrollX
+          ) {
             // Align left
             const leftMax = columnRights[cell.col] - columnRights[0]
             // Align right
@@ -489,7 +508,7 @@ export const DataSheetGrid = React.memo(
               return null
             }
 
-            return a && { ...a, row }
+            return a && { col: a.col, row }
           })
           setSelectionCell(null)
           onChange(
@@ -549,10 +568,11 @@ export const DataSheetGrid = React.memo(
           }
 
           if (smartDelete && deepEqual(newData, data)) {
-            setActiveCell({ col: 0, row: min.row })
+            setActiveCell({ col: 0, row: min.row, doNotScrollX: true })
             setSelectionCell({
               col: columns.length - (hasStickyRightColumn ? 3 : 2),
               row: max.row,
+              doNotScrollX: true,
             })
             return
           }
@@ -592,7 +612,7 @@ export const DataSheetGrid = React.memo(
             setEditing(false)
 
             if (nextRow) {
-              setActiveCell((a) => a && { ...a, row: a.row + 1 })
+              setActiveCell((a) => a && { col: a.col, row: a.row + 1 })
             }
           }
         },
@@ -950,6 +970,15 @@ export const DataSheetGrid = React.memo(
                   activeCell
                     ? activeCell.row
                     : Math.max(0, cursorIndex.row),
+                doNotScrollX: Boolean(
+                  (rightClickInSelection && activeCell) ||
+                    clickOnStickyRightColumn ||
+                    cursorIndex.col === -1
+                ),
+                doNotScrollY: Boolean(
+                  (rightClickInSelection && activeCell) ||
+                    cursorIndex.row === -1
+                ),
               }
             )
           }
@@ -996,17 +1025,22 @@ export const DataSheetGrid = React.memo(
             ) {
               let col = cursorIndex.col
               let row = cursorIndex.row
+              let doNotScrollX = false
+              let doNotScrollY = false
 
               if (cursorIndex.col === -1 || clickOnStickyRightColumn) {
                 col = columns.length - (hasStickyRightColumn ? 3 : 2)
+                doNotScrollX = true
               }
 
               if (cursorIndex.row === -1) {
                 row = data.length - 1
+                doNotScrollY = true
               }
 
               if (rightClickOnSelectedHeaders && selectionCell) {
                 col = selectionCell.col
+                doNotScrollY = true
               }
 
               if (
@@ -1015,9 +1049,15 @@ export const DataSheetGrid = React.memo(
                 selectionCell
               ) {
                 row = selectionCell.row
+                doNotScrollX = true
               }
+<<<<<<< HEAD
               setSelectionCell({ col, row })
               // setSelectionCell(null)
+=======
+
+              setSelectionCell({ col, row, doNotScrollX, doNotScrollY })
+>>>>>>> 4d039c3de5af80f45d09ea0cca96d0a98c809efc
             } else {
               setSelectionCell(null)
             }
@@ -1133,6 +1173,8 @@ export const DataSheetGrid = React.memo(
                 activeCell?.row ?? Infinity,
                 selection?.min.row ?? Infinity
               ),
+              doNotScrollX: true,
+              doNotScrollY: true,
             })
             setSelectionCell({
               col: Math.max(activeCell?.col ?? 0, selection?.max.col ?? 0),
@@ -1196,6 +1238,8 @@ export const DataSheetGrid = React.memo(
                 row: selectionMode.rows
                   ? Math.max(0, cursorIndex.row)
                   : data.length - 1,
+                doNotScrollX: !selectionMode.columns,
+                doNotScrollY: !selectionMode.rows,
               }
             )
             setEditing(false)
@@ -1418,10 +1462,17 @@ export const DataSheetGrid = React.memo(
             }
           } else if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
             if (!editing) {
-              setActiveCell({ col: 0, row: 0 })
+              setActiveCell({
+                col: 0,
+                row: 0,
+                doNotScrollY: true,
+                doNotScrollX: true,
+              })
               setSelectionCell({
                 col: columns.length - (hasStickyRightColumn ? 3 : 2),
                 row: data.length - 1,
+                doNotScrollY: true,
+                doNotScrollX: true,
               })
               event.preventDefault()
             }
