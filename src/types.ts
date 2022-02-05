@@ -180,6 +180,7 @@ export type DataSheetGridProps<T> = {
   onBlur?: (opts: { cell: CellWithId }) => void
   onActiveCellChange?: (opts: { cell: CellWithId | null }) => void
   onSelectionChange?: (opts: { selection: SelectionWithId | null }) => void
+  isEditing?: boolean
 }
 
 type CellWithIdInput = {

@@ -84,6 +84,7 @@ export const DataSheetGrid = React.memo(
         onActiveCellChange = DEFAULT_EMPTY_CALLBACK,
         onSelectionChange = DEFAULT_EMPTY_CALLBACK,
         rowClassName,
+        isEditing = false,
       }: DataSheetGridProps<T>,
       ref: React.ForwardedRef<DataSheetGridRef>
     ): JSX.Element => {
@@ -161,21 +162,36 @@ export const DataSheetGrid = React.memo(
       )
 
       // Min and max of the current selection (rectangle defined by the active cell and the selection cell), null when nothing is selected
-      const selection = useMemo<Selection | null>(
-        () =>
+      const selection = useMemo<Selection | null>(() => {
+        // return (
+        //   activeCell &&
+        //   selectionCell && {
+        //     min: {
+        //       col: Math.min(activeCell.col, selectionCell.col),
+        //       row: Math.min(activeCell.row, selectionCell.row),
+        //     },
+        //     max: {
+        //       col: Math.max(activeCell.col, selectionCell.col),
+        //       row: Math.max(activeCell.row, selectionCell.row),
+        //     },
+        //   }
+        // )
+
+        // Només volem tenir navegació de cel·la
+        return (
           activeCell &&
           selectionCell && {
             min: {
-              col: Math.min(activeCell.col, selectionCell.col),
-              row: Math.min(activeCell.row, selectionCell.row),
+              col: activeCell.col,
+              row: activeCell.row,
             },
             max: {
-              col: Math.max(activeCell.col, selectionCell.col),
-              row: Math.max(activeCell.row, selectionCell.row),
+              col: activeCell.col,
+              row: activeCell.row,
             },
-          },
-        [activeCell, selectionCell]
-      )
+          }
+        )
+      }, [activeCell, selectionCell])
 
       // Behavior of the selection when the user drags the mouse around
       const [selectionMode, setSelectionMode] = useDeepEqualState({
@@ -828,6 +844,8 @@ export const DataSheetGrid = React.memo(
 
       const onMouseDown = useCallback(
         (event: MouseEvent) => {
+          console.log('MouseEvent: ', event)
+
           if (contextMenu && contextMenuItems.length) {
             return
           }
@@ -839,6 +857,8 @@ export const DataSheetGrid = React.memo(
           const cursorIndex = clickInside
             ? getCursorIndex(event, true, true)
             : null
+
+          console.log('cursorIndex: ', cursorIndex)
 
           if (
             !clickInside &&
@@ -938,7 +958,7 @@ export const DataSheetGrid = React.memo(
             lastEditingCellRef.current = activeCell
           }
 
-          setEditing(Boolean(clickOnActiveCell && !rightClick))
+          setEditing(Boolean(isEditing && clickOnActiveCell && !rightClick))
           setSelectionMode(
             cursorIndex && !rightClick
               ? {
@@ -996,8 +1016,8 @@ export const DataSheetGrid = React.memo(
               ) {
                 row = selectionCell.row
               }
-
               setSelectionCell({ col, row })
+              // setSelectionCell(null)
             } else {
               setSelectionCell(null)
             }
@@ -1347,7 +1367,12 @@ export const DataSheetGrid = React.memo(
               }
             } else if (!isCellDisabled(activeCell)) {
               lastEditingCellRef.current = activeCell
-              setEditing(true)
+
+              // Només canviem l'estat de la cel·la a editar si estem editant el grid
+              console.log('Editem cel·la: ', activeCell)
+              if (isEditing) {
+                setEditing(true)
+              }
               scrollTo(activeCell)
             }
           } else if (
@@ -1378,7 +1403,12 @@ export const DataSheetGrid = React.memo(
             if (!editing && !isCellDisabled(activeCell)) {
               lastEditingCellRef.current = activeCell
               setSelectionCell(null)
-              setEditing(true)
+              // Només canviem l'estat de la cel·la a editar si estem editant el grid
+              console.log('Editem cel·la: ', activeCell)
+
+              if (isEditing) {
+                setEditing(true)
+              }
               scrollTo(activeCell)
             }
           } else if (['Backspace', 'Delete'].includes(event.key)) {
