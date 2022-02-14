@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import cx from 'classnames'
 import { Column } from '../types'
 

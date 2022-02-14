@@ -72,6 +72,7 @@ export type ListItemData<T> = {
 
 export type HeaderContextType<T> = {
   columns: Column<T, any, string>[]
+  setColumnsWidth: any
   contentWidth?: number
   hasStickyRightColumn: boolean
   height: number

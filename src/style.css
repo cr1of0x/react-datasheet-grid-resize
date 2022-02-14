@@ -44,8 +44,20 @@
 
 .dsg-row-header {
   position: sticky;
+  /* position: relative; */
   top: 0;
   z-index: 4;
+}
+
+.dsg-resizer {
+  /* Displayed at the right side of column */
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
 }
 
 .dsg-cell {

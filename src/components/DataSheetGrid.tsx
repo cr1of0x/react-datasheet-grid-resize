@@ -95,7 +95,11 @@ export const DataSheetGrid = React.memo(
     ): JSX.Element => {
       const lastEditingCellRef = useRef<Cell | null>(null)
       const disableContextMenu = disableContextMenuRaw || lockRows
-      const columns = useColumns(rawColumns, gutterColumn, stickyRightColumn)
+      const [columns, setColumnsWidth] = useColumns(
+        rawColumns,
+        gutterColumn,
+        stickyRightColumn
+      )
       const hasStickyRightColumn = Boolean(stickyRightColumn)
       const listRef = useRef<VariableSizeList>(null)
       const innerRef = useRef<HTMLElement>(null)
@@ -1630,6 +1634,7 @@ export const DataSheetGrid = React.memo(
         height: headerRowHeight,
         contentWidth: fullWidth ? undefined : contentWidth,
         columns,
+        setColumnsWidth: setColumnsWidth,
         activeColMin: selection?.min.col ?? activeCell?.col,
         activeColMax: selection?.max.col ?? activeCell?.col,
       })
