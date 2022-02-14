@@ -605,18 +605,50 @@ export const DataSheetGrid = React.memo(
       )
 
       const stopEditing = useCallback(
-        ({ nextRow = true } = {}) => {
+        ({ nextRow = true } = { nextRow: Boolean }) => {
+          console.log('stopEditing: ', nextRow)
           if (activeCell?.row === dataRef.current.length - 1) {
             if (nextRow && autoAddRow) {
               insertRowAfter(activeCell.row)
             } else {
               setEditing(false)
+              setActiveCell((a) => {
+                let col = 0
+                let row = 0
+                if (a) {
+                  if (a.col === columns.length - 2) {
+                    col = a.col
+                    row = a.row
+                  } else {
+                    col = a.col + 1
+                    row = a.row
+                  }
+                }
+                return a && { col: col, row: row }
+              })
             }
           } else {
             setEditing(false)
+            console.log('stopEditing navigation')
 
             if (nextRow) {
               setActiveCell((a) => a && { col: a.col, row: a.row + 1 })
+            } else {
+              setActiveCell((a) => {
+                let col = 0
+                let row = 0
+                if (a) {
+                  if (a.col === columns.length - 2) {
+                    col = 0
+                    row = a.row + 1
+                  } else {
+                    col = a.col + 1
+                    row = a.row
+                  }
+                }
+
+                return a && { col: col, row: row }
+              })
             }
           }
         },
@@ -1429,10 +1461,11 @@ export const DataSheetGrid = React.memo(
             !event.shiftKey
           ) {
             setSelectionCell(null)
+            console.log('editing value: ', editing)
 
             if (editing) {
               if (!columns[activeCell.col + 1].disableKeys) {
-                stopEditing()
+                stopEditing({ nextRow: false })
               }
             } else if (!isCellDisabled(activeCell)) {
               lastEditingCellRef.current = activeCell
