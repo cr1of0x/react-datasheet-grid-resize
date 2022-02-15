@@ -53,18 +53,12 @@ function App() {
         value={data}
         onChange={setData}
         onRowSubmit={(prevValue: Row[], newValue: Row[], rowIndex: number) => {
-          console.log('onRowSubmit: ', prevValue, newValue, rowIndex)
           setData(newValue)
         }}
         columns={columns}
         isEditing={isEditing}
-        onActiveCellChange={(props: any) =>
-          console.log('onActiveCellChange: ', props)
-        }
-        onSelectionChange={(props: any) =>
-          console.log('onSelectionChange: ', props)
-        }
         onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
+        autoAddRow={true}
       />
     </div>
   )

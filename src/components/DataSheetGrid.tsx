@@ -327,7 +327,7 @@ export const DataSheetGrid = React.memo(
       )
 
       const insertRowAfter = useCallback(
-        (row: number, count = 1) => {
+        (row: number, count = 1, firstActiveCol: boolean = false) => {
           if (lockRows) {
             return
           }
@@ -350,7 +350,7 @@ export const DataSheetGrid = React.memo(
             ]
           )
           setActiveCell((a) => ({
-            col: a?.col || 0,
+            col: firstActiveCol ? 0 : a?.col || 0,
             row: row + count,
             doNotScrollX: true,
           }))
@@ -480,8 +480,6 @@ export const DataSheetGrid = React.memo(
       const rowDataInit = useRef<{ data: T; rowIndex: number }>()
       const setRowData = useCallback(
         (rowIndex: number, item: T, end: boolean) => {
-          console.log('setRowData: ', end)
-          console.log('rowDataInit: ', rowDataInit)
           if (end) {
             if (rowDataInit.current) {
               onRowSubmit(
@@ -507,8 +505,6 @@ export const DataSheetGrid = React.memo(
               }
             }
 
-            console.log('rowDataInit: ', rowDataInit.current)
-            console.log('setRowData: ', item)
             onChange(
               [
                 ...dataRef.current?.slice(0, rowIndex),
@@ -525,7 +521,7 @@ export const DataSheetGrid = React.memo(
             )
           }
         },
-        [onChange]
+        [onChange, onRowSubmit]
       )
 
       const deleteRows = useCallback(
@@ -640,25 +636,31 @@ export const DataSheetGrid = React.memo(
       const stopEditing = useCallback(
         ({ nextRow = true } = { nextRow: Boolean }) => {
           console.log('stopEditing: ', nextRow)
-          if (activeCell?.row === dataRef.current.length - 1) {
+          console.log('stopEditing cell: ', activeCell)
+          console.log(
+            'stopEditing r and c: ',
+            dataRef.current.length - 1,
+            columns.length - 2
+          )
+          if (
+            activeCell?.row === dataRef.current.length - 1 &&
+            activeCell?.col === columns.length - 2
+          ) {
             if (nextRow && autoAddRow) {
               insertRowAfter(activeCell.row)
             } else {
-              setEditing(false)
-              setActiveCell((a) => {
-                let col = 0
-                let row = 0
-                if (a) {
-                  if (a.col === columns.length - 2) {
-                    col = a.col
-                    row = a.row
-                  } else {
-                    col = a.col + 1
-                    row = a.row
-                  }
-                }
-                return a && { col: col, row: row }
-              })
+              console.log('Insert row after: ', activeCell.row)
+              insertRowAfter(activeCell.row, 1, true)
+
+              // setEditing(false)
+
+              // if (autoAddRow && activeCell.col === columns.length - 2) {
+              //   insertRowAfter(activeCell.row)
+              // } else {
+              //   setActiveCell((a) => {
+              //     return a && { col: a.col + 1, row: a.row }
+              //   })
+              // }
             }
           } else {
             setEditing(false)
@@ -685,13 +687,7 @@ export const DataSheetGrid = React.memo(
             }
           }
         },
-        [
-          activeCell?.row,
-          autoAddRow,
-          insertRowAfter,
-          setActiveCell,
-          columns.length,
-        ]
+        [activeCell, autoAddRow, insertRowAfter, setActiveCell, columns.length]
       )
 
       const onCopy = useCallback(
