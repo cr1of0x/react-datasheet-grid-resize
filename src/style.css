@@ -95,7 +95,7 @@
 .dsg-cell-gutter {
   color: var(--dsg-header-text-color);
   transition: color var(--dsg-transition-duration);
-  box-shadow: none;
+  /* box-shadow: none; */
 }
 
 .dsg-cell-header-container {

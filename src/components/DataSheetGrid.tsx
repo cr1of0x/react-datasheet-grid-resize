@@ -81,6 +81,7 @@ export const DataSheetGrid = React.memo(
         createRow = DEFAULT_CREATE_ROW as () => T,
         autoAddRow = false,
         lockRows = false,
+        showAddRowsComponent = false,
         disableExpandSelection = true,
         duplicateRow = DEFAULT_DUPLICATE_ROW,
         contextMenuComponent: ContextMenuComponent = ContextMenu,
@@ -167,7 +168,7 @@ export const DataSheetGrid = React.memo(
       // Highlighted cell, null when not focused
       const [activeCell, setActiveCell] = useDeepEqualState<
         (Cell & ScrollBehavior) | null
-      >(null)
+      >({ col: 0, row: 0, doNotScrollX: true })
 
       // The selection cell and the active cell are the two corners of the selection, null when nothing is selected
       const [selectionCell, setSelectionCell] = useDeepEqualState<
@@ -635,13 +636,6 @@ export const DataSheetGrid = React.memo(
 
       const stopEditing = useCallback(
         ({ nextRow = true } = { nextRow: Boolean }) => {
-          console.log('stopEditing: ', nextRow)
-          console.log('stopEditing cell: ', activeCell)
-          console.log(
-            'stopEditing r and c: ',
-            dataRef.current.length - 1,
-            columns.length - 2
-          )
           if (
             activeCell?.row === dataRef.current.length - 1 &&
             activeCell?.col === columns.length - 2
@@ -649,22 +643,10 @@ export const DataSheetGrid = React.memo(
             if (nextRow && autoAddRow) {
               insertRowAfter(activeCell.row)
             } else {
-              console.log('Insert row after: ', activeCell.row)
               insertRowAfter(activeCell.row, 1, true)
-
-              // setEditing(false)
-
-              // if (autoAddRow && activeCell.col === columns.length - 2) {
-              //   insertRowAfter(activeCell.row)
-              // } else {
-              //   setActiveCell((a) => {
-              //     return a && { col: a.col + 1, row: a.row }
-              //   })
-              // }
             }
           } else {
             setEditing(false)
-            console.log('stopEditing navigation')
 
             if (nextRow) {
               setActiveCell((a) => a && { col: a.col, row: a.row + 1 })
@@ -1020,34 +1002,36 @@ export const DataSheetGrid = React.memo(
             (!(event.shiftKey && activeCell) || rightClick) &&
             data.length > 0
           ) {
-            setActiveCell(
-              cursorIndex && {
-                col:
-                  (rightClickInSelection || rightClickOnSelectedHeaders) &&
-                  activeCell
-                    ? activeCell.col
-                    : Math.max(
-                        0,
-                        clickOnStickyRightColumn ? 0 : cursorIndex.col
-                      ),
-                row:
-                  (rightClickInSelection ||
-                    rightClickOnSelectedGutter ||
-                    clickOnSelectedStickyRightColumn) &&
-                  activeCell
-                    ? activeCell.row
-                    : Math.max(0, cursorIndex.row),
-                doNotScrollX: Boolean(
-                  (rightClickInSelection && activeCell) ||
-                    clickOnStickyRightColumn ||
-                    cursorIndex.col === -1
-                ),
-                doNotScrollY: Boolean(
-                  (rightClickInSelection && activeCell) ||
-                    cursorIndex.row === -1
-                ),
-              }
-            )
+            if (cursorIndex) {
+              setActiveCell(
+                cursorIndex && {
+                  col:
+                    (rightClickInSelection || rightClickOnSelectedHeaders) &&
+                    activeCell
+                      ? activeCell.col
+                      : Math.max(
+                          0,
+                          clickOnStickyRightColumn ? 0 : cursorIndex.col
+                        ),
+                  row:
+                    (rightClickInSelection ||
+                      rightClickOnSelectedGutter ||
+                      clickOnSelectedStickyRightColumn) &&
+                    activeCell
+                      ? activeCell.row
+                      : Math.max(0, cursorIndex.row),
+                  doNotScrollX: Boolean(
+                    (rightClickInSelection && activeCell) ||
+                      clickOnStickyRightColumn ||
+                      cursorIndex.col === -1
+                  ),
+                  doNotScrollY: Boolean(
+                    (rightClickInSelection && activeCell) ||
+                      cursorIndex.row === -1
+                  ),
+                }
+              )
+            }
           }
 
           if (clickOnActiveCell && !rightClick) {
@@ -1882,7 +1866,7 @@ export const DataSheetGrid = React.memo(
               })
             }}
           />
-          {!lockRows && (
+          {showAddRowsComponent && !lockRows && (
             <AddRowsComponent
               addRows={(count) => insertRowAfter(data.length - 1, count)}
             />

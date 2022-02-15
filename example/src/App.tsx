@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react'
 import {
   checkboxColumn,
   Column,
-  DataSheetGrid,
   DynamicDataSheetGrid,
   keyColumn,
   textColumn,
