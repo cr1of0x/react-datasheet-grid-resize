@@ -9,12 +9,14 @@ export const Cell: FC<{
   column: Column<any, any, any>
   className: string
   active?: boolean
+  editing?: boolean
 }> = ({
   children,
   gutter,
   stickyRight,
   column,
   active,
+  editing,
   disabled,
   className,
 }) => {
@@ -23,9 +25,11 @@ export const Cell: FC<{
       className={cx(
         'dsg-cell',
         gutter && 'dsg-cell-gutter',
-        disabled && 'dsg-cell-disabled',
+        disabled && !active && 'dsg-cell-disabled',
         gutter && active && 'dsg-cell-gutter-active',
         stickyRight && 'dsg-cell-sticky-right',
+        active && !editing && 'dsg-cell-active-row',
+        editing && 'dsg-cell-editing',
         className
       )}
       style={{

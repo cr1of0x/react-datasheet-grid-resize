@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   checkboxColumn,
   Column,
   DataSheetGrid,
+  DynamicDataSheetGrid,
   keyColumn,
   textColumn,
 } from 'react-datasheet-grid'
@@ -22,22 +23,38 @@ function App() {
     { active: false, firstName: 'Jeff', lastName: 'Bezos' },
   ])
 
-  const columns: Column<Row>[] = [
-    {
-      ...keyColumn<Row, 'active'>('active', checkboxColumn),
-      title: 'Active',
-      width: 0.5,
-    },
-    {
-      ...keyColumn<Row, 'firstName'>('firstName', textColumn),
-      title: 'First name',
-    },
-    {
-      ...keyColumn<Row, 'lastName'>('lastName', textColumn),
-      title: 'Last name',
-      width: 2,
-    },
-  ]
+  const [activeVisible, setActiveVisible] = useState(true)
+  const [firstNameVisible, setFirstNameVisible] = useState(true)
+  const [lastNameVisible, setLastNameVisible] = useState(true)
+
+  const columns: Column<Row>[] = useMemo(() => {
+    let cols = []
+    if (activeVisible) {
+      cols.push({
+        ...keyColumn<Row, 'active'>('active', checkboxColumn),
+        title: 'Active',
+        width: 0.5,
+      })
+    }
+
+    if (firstNameVisible) {
+      cols.push({
+        ...keyColumn<Row, 'firstName'>('firstName', textColumn),
+        title: 'First name',
+      })
+    }
+
+    if (lastNameVisible) {
+      cols.push({
+        ...keyColumn<Row, 'lastName'>('lastName', textColumn),
+        title: 'Last name',
+        width: 2,
+        disabled: true,
+      })
+    }
+
+    return cols
+  }, [activeVisible, firstNameVisible, lastNameVisible])
 
   return (
     <div
@@ -48,8 +65,31 @@ function App() {
         background: '#f3f3f3',
       }}
     >
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <button
+          onClick={() => {
+            setActiveVisible((v) => !v)
+          }}
+        >
+          Toggle active
+        </button>
+        <button
+          onClick={() => {
+            setFirstNameVisible((v) => !v)
+          }}
+        >
+          Toggle first name
+        </button>
+        <button
+          onClick={() => {
+            setLastNameVisible((v) => !v)
+          }}
+        >
+          Toggle last name
+        </button>
+      </div>
       <button onClick={() => setIsEditing((v) => !v)}>Toggle Edit</button>
-      <DataSheetGrid
+      <DynamicDataSheetGrid
         value={data}
         onChange={setData}
         onRowSubmit={(prevValue: Row[], newValue: Row[], rowIndex: number) => {

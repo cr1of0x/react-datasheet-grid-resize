@@ -88,6 +88,7 @@ const RowComponent = React.memo(
               stickyRight={hasStickyRightColumn && i === columns.length - 1}
               column={column}
               active={active}
+              editing={editing && activeColIndex === i - 1}
               className={cx(
                 !column.renderWhenScrolling && renderLight && 'dsg-cell-light',
                 typeof column.cellClassName === 'function'
