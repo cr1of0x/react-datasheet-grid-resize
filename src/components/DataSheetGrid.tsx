@@ -88,6 +88,7 @@ export const DataSheetGrid = React.memo(
         onBlur = DEFAULT_EMPTY_CALLBACK,
         onActiveCellChange = DEFAULT_EMPTY_CALLBACK,
         onSelectionChange = DEFAULT_EMPTY_CALLBACK,
+        onDoubleClickRow = DEFAULT_EMPTY_CALLBACK,
         rowClassName,
         isEditing = false,
       }: DataSheetGridProps<T>,
@@ -477,6 +478,7 @@ export const DataSheetGrid = React.memo(
 
       const setRowData = useCallback(
         (rowIndex: number, item: T) => {
+          console.log('setRowData: ', item)
           onChange(
             [
               ...dataRef.current?.slice(0, rowIndex),
@@ -652,7 +654,13 @@ export const DataSheetGrid = React.memo(
             }
           }
         },
-        [activeCell?.row, autoAddRow, insertRowAfter, setActiveCell]
+        [
+          activeCell?.row,
+          autoAddRow,
+          insertRowAfter,
+          setActiveCell,
+          columns.length,
+        ]
       )
 
       const onCopy = useCallback(
@@ -900,8 +908,6 @@ export const DataSheetGrid = React.memo(
 
       const onMouseDown = useCallback(
         (event: MouseEvent) => {
-          console.log('MouseEvent: ', event)
-
           if (contextMenu && contextMenuItems.length) {
             return
           }
@@ -913,8 +919,6 @@ export const DataSheetGrid = React.memo(
           const cursorIndex = clickInside
             ? getCursorIndex(event, true, true)
             : null
-
-          console.log('cursorIndex: ', cursorIndex)
 
           if (
             !clickInside &&
@@ -1461,8 +1465,6 @@ export const DataSheetGrid = React.memo(
             !event.shiftKey
           ) {
             setSelectionCell(null)
-            console.log('editing value: ', editing)
-
             if (editing) {
               if (!columns[activeCell.col + 1].disableKeys) {
                 stopEditing({ nextRow: false })
@@ -1471,7 +1473,6 @@ export const DataSheetGrid = React.memo(
               lastEditingCellRef.current = activeCell
 
               // Només canviem l'estat de la cel·la a editar si estem editant el grid
-              console.log('Editem cel·la: ', activeCell)
               if (isEditing) {
                 setEditing(true)
               }
@@ -1506,8 +1507,6 @@ export const DataSheetGrid = React.memo(
               lastEditingCellRef.current = activeCell
               setSelectionCell(null)
               // Només canviem l'estat de la cel·la a editar si estem editant el grid
-              console.log('Editem cel·la: ', activeCell)
-
               if (isEditing) {
                 setEditing(true)
               }
@@ -1539,7 +1538,7 @@ export const DataSheetGrid = React.memo(
         [
           activeCell,
           columns,
-          data.length,
+          data,
           deleteSelection,
           duplicateRows,
           editing,
@@ -1554,6 +1553,7 @@ export const DataSheetGrid = React.memo(
           stopEditing,
           hasStickyRightColumn,
           isEditing,
+          deleteRows,
         ]
       )
       useDocumentEventListener('keydown', onKeyDown)
@@ -1714,6 +1714,7 @@ export const DataSheetGrid = React.memo(
         stopEditing,
         getContextMenuItems,
         rowClassName,
+        onDoubleClickRow,
       })
 
       const itemSize = useCallback(

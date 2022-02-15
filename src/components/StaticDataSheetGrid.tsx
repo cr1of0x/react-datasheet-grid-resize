@@ -21,6 +21,7 @@ export const StaticDataSheetGrid = React.forwardRef<
       onActiveCellChange,
       onSelectionChange,
       rowClassName,
+      onDoubleClickRow,
       ...rest
     }: DataSheetGridProps<T>,
     ref: React.ForwardedRef<DataSheetGridRef>
@@ -38,6 +39,7 @@ export const StaticDataSheetGrid = React.forwardRef<
       onActiveCellChange,
       onSelectionChange,
       rowClassName,
+      onDoubleClickRow,
     })
 
     return <DataSheetGrid {...staticProps} {...rest} ref={ref} />

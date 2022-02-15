@@ -24,6 +24,7 @@ const RowComponent = React.memo(
     duplicateRows,
     stopEditing,
     getContextMenuItems,
+    onDoubleClickRow,
     rowClassName,
   }: RowProps<any>) => {
     const firstRender = useFirstRender()
@@ -50,6 +51,8 @@ const RowComponent = React.memo(
       insertRowAfter(index)
     }, [insertRowAfter, index])
 
+    console.log('Is active row: ', active, index)
+
     return (
       <div
         className={cx(
@@ -59,6 +62,9 @@ const RowComponent = React.memo(
             ? rowClassName({ rowData: data, rowIndex: index })
             : null
         )}
+        onDoubleClick={() => {
+          if (onDoubleClickRow) onDoubleClickRow(data)
+        }}
         style={style}
       >
         {columns.map((column, i) => {
@@ -164,6 +170,7 @@ export const Row = <T extends any>({
       }
       getContextMenuItems={data.getContextMenuItems}
       rowClassName={data.rowClassName}
+      onDoubleClickRow={data.onDoubleClickRow}
     />
   )
 }

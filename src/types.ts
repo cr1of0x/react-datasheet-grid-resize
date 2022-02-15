@@ -65,6 +65,7 @@ export type ListItemData<T> = {
   insertRowAfter: (row: number, count?: number) => void
   stopEditing: (opts?: { nextRow?: boolean }) => void
   getContextMenuItems: () => ContextMenuItem[]
+  onDoubleClickRow?: (rowData: T) => void
   rowClassName?:
     | string
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
@@ -114,6 +115,7 @@ export type RowProps<T> = {
   insertRowAfter: (row: number, count?: number) => void
   stopEditing?: (opts?: { nextRow?: boolean }) => void
   getContextMenuItems: () => ContextMenuItem[]
+  onDoubleClickRow?: (rowData: T) => void
   rowClassName?:
     | string
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
@@ -181,6 +183,7 @@ export type DataSheetGridProps<T> = {
   onBlur?: (opts: { cell: CellWithId }) => void
   onActiveCellChange?: (opts: { cell: CellWithId | null }) => void
   onSelectionChange?: (opts: { selection: SelectionWithId | null }) => void
+  onDoubleClickRow?: (dataRow: T) => void
   isEditing?: boolean
 }
 

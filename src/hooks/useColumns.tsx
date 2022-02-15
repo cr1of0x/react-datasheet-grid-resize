@@ -40,7 +40,6 @@ export const useColumns = <T extends any>(
 
   return [
     useMemo<Column<T, any, any>[]>(() => {
-      console.log('UseColumns: ', columns)
       const partialColumns: Partial<Column<T, any, any>>[] = [
         gutterColumn === false
           ? {
