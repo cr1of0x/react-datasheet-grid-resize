@@ -52,6 +52,10 @@ function App() {
       <DataSheetGrid
         value={data}
         onChange={setData}
+        onRowSubmit={(prevValue: Row[], newValue: Row[], rowIndex: number) => {
+          console.log('onRowSubmit: ', prevValue, newValue, rowIndex)
+          setData(newValue)
+        }}
         columns={columns}
         isEditing={isEditing}
         onActiveCellChange={(props: any) =>

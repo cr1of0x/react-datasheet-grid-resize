@@ -71,6 +71,7 @@ export const DataSheetGrid = React.memo(
         style,
         height: maxHeight = 400,
         onChange = DEFAULT_EMPTY_CALLBACK,
+        onRowSubmit = DEFAULT_EMPTY_CALLBACK,
         columns: rawColumns = DEFAULT_COLUMNS,
         rowHeight = 40,
         headerRowHeight = rowHeight,
@@ -80,7 +81,7 @@ export const DataSheetGrid = React.memo(
         createRow = DEFAULT_CREATE_ROW as () => T,
         autoAddRow = false,
         lockRows = false,
-        disableExpandSelection = false,
+        disableExpandSelection = true,
         duplicateRow = DEFAULT_DUPLICATE_ROW,
         contextMenuComponent: ContextMenuComponent = ContextMenu,
         disableContextMenu: disableContextMenuRaw = false,
@@ -476,23 +477,53 @@ export const DataSheetGrid = React.memo(
         }
       }, [activeCell, scrollTo])
 
+      const rowDataInit = useRef<{ data: T; rowIndex: number }>()
       const setRowData = useCallback(
-        (rowIndex: number, item: T) => {
-          console.log('setRowData: ', item)
-          onChange(
-            [
-              ...dataRef.current?.slice(0, rowIndex),
-              item,
-              ...dataRef.current?.slice(rowIndex + 1),
-            ],
-            [
-              {
-                type: 'UPDATE',
-                fromRowIndex: rowIndex,
-                toRowIndex: rowIndex + 1,
-              },
-            ]
-          )
+        (rowIndex: number, item: T, end: boolean) => {
+          console.log('setRowData: ', end)
+          console.log('rowDataInit: ', rowDataInit)
+          if (end) {
+            if (rowDataInit.current) {
+              onRowSubmit(
+                [
+                  ...dataRef.current?.slice(0, rowIndex),
+                  rowDataInit.current.data,
+                  ...dataRef.current?.slice(rowIndex + 1),
+                ],
+                [
+                  ...dataRef.current?.slice(0, rowIndex),
+                  item,
+                  ...dataRef.current?.slice(rowIndex + 1),
+                ],
+                rowIndex
+              )
+              rowDataInit.current = undefined
+            }
+          } else {
+            if (!rowDataInit.current) {
+              rowDataInit.current = {
+                data: dataRef.current?.slice(rowIndex, rowIndex + 1)[0],
+                rowIndex: rowIndex,
+              }
+            }
+
+            console.log('rowDataInit: ', rowDataInit.current)
+            console.log('setRowData: ', item)
+            onChange(
+              [
+                ...dataRef.current?.slice(0, rowIndex),
+                item,
+                ...dataRef.current?.slice(rowIndex + 1),
+              ],
+              [
+                {
+                  type: 'UPDATE',
+                  fromRowIndex: rowIndex,
+                  toRowIndex: rowIndex + 1,
+                },
+              ]
+            )
+          }
         },
         [onChange]
       )
@@ -1706,6 +1737,7 @@ export const DataSheetGrid = React.memo(
         activeCell,
         selectionMinRow: selection?.min.row ?? activeCell?.row,
         selectionMaxRow: selection?.max.row ?? activeCell?.row,
+        isGridEditing: isEditing,
         editing,
         setRowData,
         deleteRows,

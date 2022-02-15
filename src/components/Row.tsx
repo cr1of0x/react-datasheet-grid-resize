@@ -1,6 +1,6 @@
 import { areEqual, ListChildComponentProps } from 'react-window'
 import { ListItemData, RowProps } from '../types'
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import cx from 'classnames'
 import { Cell } from './Cell'
 import { useFirstRender } from '../hooks/useFirstRender'
@@ -17,6 +17,7 @@ const RowComponent = React.memo(
     hasStickyRightColumn,
     active,
     activeColIndex,
+    isGridEditing,
     editing,
     setRowData,
     deleteRows,
@@ -34,9 +35,9 @@ const RowComponent = React.memo(
 
     const setGivenRowData = useCallback(
       (rowData: any) => {
-        setRowData(index, rowData)
+        setRowData(index, rowData, !active)
       },
-      [index, setRowData]
+      [index, setRowData, active]
     )
 
     const deleteGivenRow = useCallback(() => {
@@ -51,7 +52,11 @@ const RowComponent = React.memo(
       insertRowAfter(index)
     }, [insertRowAfter, index])
 
-    console.log('Is active row: ', active, index)
+    useEffect(() => {
+      if (!active && isGridEditing) {
+        setGivenRowData(data)
+      }
+    }, [active, isGridEditing, setGivenRowData, data])
 
     return (
       <div
@@ -171,6 +176,7 @@ export const Row = <T extends any>({
       getContextMenuItems={data.getContextMenuItems}
       rowClassName={data.rowClassName}
       onDoubleClickRow={data.onDoubleClickRow}
+      isGridEditing={data.isGridEditing}
     />
   )
 }

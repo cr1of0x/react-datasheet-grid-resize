@@ -58,8 +58,9 @@ export type ListItemData<T> = {
   activeCell: Cell | null
   selectionMinRow?: number
   selectionMaxRow?: number
+  isGridEditing: boolean
   editing: boolean
-  setRowData: (rowIndex: number, item: T) => void
+  setRowData: (rowIndex: number, item: T, end: boolean) => void
   deleteRows: (rowMin: number, rowMax?: number) => void
   duplicateRows: (rowMin: number, rowMax?: number) => void
   insertRowAfter: (row: number, count?: number) => void
@@ -109,7 +110,8 @@ export type RowProps<T> = {
   active: boolean
   activeColIndex: number | null
   editing: boolean
-  setRowData: (rowIndex: number, item: T) => void
+  isGridEditing: boolean
+  setRowData: (rowIndex: number, item: T, end: boolean) => void
   deleteRows: (rowMin: number, rowMax?: number) => void
   duplicateRows: (rowMin: number, rowMax?: number) => void
   insertRowAfter: (row: number, count?: number) => void
@@ -152,7 +154,7 @@ export type ContextMenuComponentProps = {
 }
 
 export type Operation = {
-  type: 'UPDATE' | 'DELETE' | 'CREATE'
+  type: 'UPDATE' | 'DELETE' | 'CREATE' | 'UPDATE_ROW'
   fromRowIndex: number
   toRowIndex: number
 }
@@ -165,6 +167,7 @@ export type DataSheetGridProps<T> = {
     | string
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
   onChange?: (value: T[], operations: Operation[]) => void
+  onRowSubmit?: (prevValue: T[], newValue: T[], rowIndex: number) => void
   columns?: Partial<Column<T, any, any>>[]
   gutterColumn?: SimpleColumn<T, any> | false
   stickyRightColumn?: SimpleColumn<T, any>
