@@ -60,9 +60,9 @@ function App() {
       style={{
         margin: '50px',
         padding: '50px',
-        height: '500px',
         maxWidth: '900px',
         background: '#f3f3f3',
+        height: '400px',
         display: 'flex',
         flexDirection: 'column',
         flexGrow: 1,
@@ -103,7 +103,6 @@ function App() {
         isEditing={isEditing}
         onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
         autoAddRow={true}
-        fullHeight={true}
         // height={700}
       />
     </div>

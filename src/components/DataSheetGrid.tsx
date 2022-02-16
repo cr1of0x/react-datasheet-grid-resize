@@ -47,6 +47,7 @@ import {
   getSelectionWithId,
 } from '../utils/typeCheck'
 import { getAllTabbableElements } from '../utils/tab'
+import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
 
 const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any, any>[] = []
@@ -69,7 +70,6 @@ export const DataSheetGrid = React.memo(
         value: data = DEFAULT_DATA,
         className,
         style,
-        fullHeight = false,
         height: maxHeight, //= 400,
         onChange = DEFAULT_EMPTY_CALLBACK,
         onRowSubmit = DEFAULT_EMPTY_CALLBACK,
@@ -108,7 +108,6 @@ export const DataSheetGrid = React.memo(
       const listRef = useRef<VariableSizeList>(null)
       const innerRef = useRef<HTMLElement>(null)
       const outerRef = useRef<HTMLElement>(null)
-      const outerContainerRef = useRef<HTMLDivElement>(null)
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
       const afterTabIndexRef = useRef<HTMLDivElement>(null)
 
@@ -1830,7 +1829,7 @@ export const DataSheetGrid = React.memo(
       ])
 
       return (
-        <div className={className} style={style} ref={outerContainerRef}>
+        <div className={className} style={style}>
           <div
             ref={beforeTabIndexRef}
             tabIndex={rawColumns.length && data.length ? 0 : undefined}
@@ -1841,27 +1840,30 @@ export const DataSheetGrid = React.memo(
           />
           <HeaderContext.Provider value={headerContext}>
             <SelectionContext.Provider value={selectionContext}>
-              <VariableSizeList<ListItemData<T>>
-                className="dsg-container"
-                width="100%"
-                ref={listRef}
-                height={
-                  fullHeight
-                    ? outerContainerRef?.current?.clientHeight ?? displayHeight
-                    : displayHeight
-                }
-                itemCount={data.length + 1}
-                itemSize={itemSize}
-                estimatedItemSize={rowHeight}
-                itemData={itemData}
-                outerRef={outerRef}
-                innerRef={innerRef}
-                innerElementType={InnerContainer}
-                children={Row}
-                useIsScrolling={columns.some(
-                  ({ renderWhenScrolling }) => !renderWhenScrolling
-                )}
-              />
+              <AutoSizer className="just-to-check">
+                {({ height, width }: Size) => {
+                  console.log('AutoSizer: ', width, height)
+                  return (
+                    <VariableSizeList<ListItemData<T>>
+                      className="dsg-container"
+                      ref={listRef}
+                      width={width}
+                      height={height}
+                      itemCount={data.length + 1}
+                      itemSize={itemSize}
+                      estimatedItemSize={rowHeight}
+                      itemData={itemData}
+                      outerRef={outerRef}
+                      innerRef={innerRef}
+                      innerElementType={InnerContainer}
+                      children={Row}
+                      useIsScrolling={columns.some(
+                        ({ renderWhenScrolling }) => !renderWhenScrolling
+                      )}
+                    />
+                  )
+                }}
+              </AutoSizer>
             </SelectionContext.Provider>
           </HeaderContext.Provider>
           <div
