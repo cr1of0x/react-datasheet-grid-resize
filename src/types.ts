@@ -171,6 +171,7 @@ export type DataSheetGridProps<T> = {
   columns?: Partial<Column<T, any, any>>[]
   gutterColumn?: SimpleColumn<T, any> | false
   stickyRightColumn?: SimpleColumn<T, any>
+  fullHeight?: boolean
   height?: number
   rowHeight?: number
   headerRowHeight?: number

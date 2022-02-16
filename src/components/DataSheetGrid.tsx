@@ -69,7 +69,8 @@ export const DataSheetGrid = React.memo(
         value: data = DEFAULT_DATA,
         className,
         style,
-        height: maxHeight = 400,
+        fullHeight = false,
+        height: maxHeight, //= 400,
         onChange = DEFAULT_EMPTY_CALLBACK,
         onRowSubmit = DEFAULT_EMPTY_CALLBACK,
         columns: rawColumns = DEFAULT_COLUMNS,
@@ -107,6 +108,7 @@ export const DataSheetGrid = React.memo(
       const listRef = useRef<VariableSizeList>(null)
       const innerRef = useRef<HTMLElement>(null)
       const outerRef = useRef<HTMLElement>(null)
+      const outerContainerRef = useRef<HTMLDivElement>(null)
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
       const afterTabIndexRef = useRef<HTMLDivElement>(null)
 
@@ -118,10 +120,13 @@ export const DataSheetGrid = React.memo(
       const [heightDiff, setHeightDiff] = useDebounceState(1, 100)
 
       // Height of the list (including scrollbars and borders) to display
-      const displayHeight = Math.min(
-        maxHeight,
-        headerRowHeight + data.length * rowHeight + heightDiff
-      )
+      // const displayHeight = Math.min(
+      //   maxHeight,
+      //   headerRowHeight + data.length * rowHeight + heightDiff
+      // )
+      const displayHeight =
+        maxHeight ??
+        Math.min(400, headerRowHeight + data.length * rowHeight + heightDiff)
 
       // Width and height of the scrollable area
       const { width, height } = useResizeDetector({
@@ -1825,7 +1830,7 @@ export const DataSheetGrid = React.memo(
       ])
 
       return (
-        <div className={className} style={style}>
+        <div className={className} style={style} ref={outerContainerRef}>
           <div
             ref={beforeTabIndexRef}
             tabIndex={rawColumns.length && data.length ? 0 : undefined}
@@ -1840,7 +1845,11 @@ export const DataSheetGrid = React.memo(
                 className="dsg-container"
                 width="100%"
                 ref={listRef}
-                height={displayHeight}
+                height={
+                  fullHeight
+                    ? outerContainerRef?.current?.clientHeight ?? displayHeight
+                    : displayHeight
+                }
                 itemCount={data.length + 1}
                 itemSize={itemSize}
                 estimatedItemSize={rowHeight}

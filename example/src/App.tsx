@@ -60,8 +60,12 @@ function App() {
       style={{
         margin: '50px',
         padding: '50px',
+        height: '500px',
         maxWidth: '900px',
         background: '#f3f3f3',
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -89,6 +93,7 @@ function App() {
       </div>
       <button onClick={() => setIsEditing((v) => !v)}>Toggle Edit</button>
       <DynamicDataSheetGrid
+        style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}
         value={data}
         onChange={setData}
         onRowSubmit={(prevValue: Row[], newValue: Row[], rowIndex: number) => {
@@ -98,6 +103,8 @@ function App() {
         isEditing={isEditing}
         onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
         autoAddRow={true}
+        fullHeight={true}
+        // height={700}
       />
     </div>
   )
