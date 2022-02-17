@@ -7,6 +7,7 @@ import {
   textColumn,
 } from 'react-datasheet-grid'
 import 'react-datasheet-grid/dist/style.css'
+import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
 import './style.css'
 
 type Row = {
@@ -58,11 +59,9 @@ function App() {
   return (
     <div
       style={{
-        margin: '50px',
-        padding: '50px',
         maxWidth: '900px',
         background: '#f3f3f3',
-        height: '400px',
+        height: '500px',
         display: 'flex',
         flexDirection: 'column',
         flexGrow: 1,
@@ -92,19 +91,40 @@ function App() {
         </button>
       </div>
       <button onClick={() => setIsEditing((v) => !v)}>Toggle Edit</button>
-      <DynamicDataSheetGrid
-        style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}
-        value={data}
-        onChange={setData}
-        onRowSubmit={(prevValue: Row[], newValue: Row[], rowIndex: number) => {
-          setData(newValue)
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
         }}
-        columns={columns}
-        isEditing={isEditing}
-        onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
-        autoAddRow={true}
-        // height={700}
-      />
+      >
+        <AutoSizer>
+          {({ height, width }: Size) => (
+            <DynamicDataSheetGrid
+              style={{
+                height: height,
+                width: width,
+              }}
+              value={data}
+              onChange={setData}
+              onRowSubmit={(
+                prevValue: Row[],
+                newValue: Row[],
+                rowIndex: number
+              ) => {
+                console.log('onRowSubmit: ', prevValue, newValue)
+                setData(newValue)
+              }}
+              columns={columns}
+              isEditing={isEditing}
+              onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
+              autoAddRow={true}
+              height={height}
+              // width={width}
+            />
+          )}
+        </AutoSizer>
+      </div>
     </div>
   )
 }

@@ -47,7 +47,6 @@ import {
   getSelectionWithId,
 } from '../utils/typeCheck'
 import { getAllTabbableElements } from '../utils/tab'
-import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
 
 const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any, any>[] = []
@@ -1828,6 +1827,7 @@ export const DataSheetGrid = React.memo(
         columns,
       ])
 
+      console.log('render grid')
       return (
         <div className={className} style={style}>
           <div
@@ -1840,30 +1840,23 @@ export const DataSheetGrid = React.memo(
           />
           <HeaderContext.Provider value={headerContext}>
             <SelectionContext.Provider value={selectionContext}>
-              <AutoSizer className="just-to-check">
-                {({ height, width }: Size) => {
-                  console.log('AutoSizer: ', width, height)
-                  return (
-                    <VariableSizeList<ListItemData<T>>
-                      className="dsg-container"
-                      ref={listRef}
-                      width={width}
-                      height={height}
-                      itemCount={data.length + 1}
-                      itemSize={itemSize}
-                      estimatedItemSize={rowHeight}
-                      itemData={itemData}
-                      outerRef={outerRef}
-                      innerRef={innerRef}
-                      innerElementType={InnerContainer}
-                      children={Row}
-                      useIsScrolling={columns.some(
-                        ({ renderWhenScrolling }) => !renderWhenScrolling
-                      )}
-                    />
-                  )
-                }}
-              </AutoSizer>
+              <VariableSizeList<ListItemData<T>>
+                className="dsg-container"
+                ref={listRef}
+                width={'100%'}
+                height={displayHeight}
+                itemCount={data.length + 1}
+                itemSize={itemSize}
+                estimatedItemSize={rowHeight}
+                itemData={itemData}
+                outerRef={outerRef}
+                innerRef={innerRef}
+                innerElementType={InnerContainer}
+                children={Row}
+                useIsScrolling={columns.some(
+                  ({ renderWhenScrolling }) => !renderWhenScrolling
+                )}
+              />
             </SelectionContext.Provider>
           </HeaderContext.Provider>
           <div

@@ -1,6 +1,6 @@
 import { areEqual, ListChildComponentProps } from 'react-window'
 import { ListItemData, RowProps } from '../types'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import cx from 'classnames'
 import { Cell } from './Cell'
 import { useFirstRender } from '../hooks/useFirstRender'
@@ -33,8 +33,11 @@ const RowComponent = React.memo(
     // True when we should render the light version (when we are scrolling)
     const renderLight = isScrolling && firstRender
 
+    const lastActive = useRef<boolean>(active)
+
     const setGivenRowData = useCallback(
       (rowData: any) => {
+        console.log('setGivenRowData active: ', active)
         setRowData(index, rowData, !active)
       },
       [index, setRowData, active]
@@ -53,9 +56,12 @@ const RowComponent = React.memo(
     }, [insertRowAfter, index])
 
     useEffect(() => {
-      if (!active && isGridEditing) {
+      // Send onRowSubmit if it was active at the previous state and now is not active
+      if (lastActive.current === true && !active && isGridEditing) {
         setGivenRowData(data)
       }
+
+      lastActive.current = active
     }, [active, isGridEditing, setGivenRowData, data])
 
     return (
