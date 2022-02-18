@@ -1465,11 +1465,6 @@ export const DataSheetGrid = React.memo(
 
             event.preventDefault()
           } else if (event.key === 'Escape') {
-            if (!editing && !selectionCell) {
-              setActiveCell(null)
-            }
-
-            setSelectionCell(null)
             setEditing(false)
           } else if (
             event.key === 'Enter' &&
