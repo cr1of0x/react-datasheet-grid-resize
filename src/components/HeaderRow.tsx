@@ -40,7 +40,11 @@ export const HeaderRow = React.memo(() => {
           )}
         >
           <div className="dsg-cell-header-container">{column.title}</div>
-          <Resizer column={column} setColumnWidth={setColumnsWidth} />
+          <Resizer
+            column={column}
+            setColumnWidth={setColumnsWidth}
+            columnIndex={i}
+          />
         </Cell>
       ))}
     </div>
@@ -50,7 +54,8 @@ export const HeaderRow = React.memo(() => {
 const Resizer: FC<{
   column: Column<any, any, any>
   setColumnWidth: any
-}> = ({ column, setColumnWidth }) => {
+  columnIndex: number
+}> = ({ column, setColumnWidth, columnIndex }) => {
   // Track the current position of mouse
 
   const x = useRef(0)
@@ -86,7 +91,7 @@ const Resizer: FC<{
     // Update the width of column
     setColumnWidth((cols: any) =>
       cols.map((x: any) => {
-        if (x.id === column.id) {
+        if (x.colIndex === columnIndex) {
           x.width = w.current + dx
         }
         return x

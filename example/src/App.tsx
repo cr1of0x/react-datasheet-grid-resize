@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import {
   checkboxColumn,
   Column,
+  createTextColumn,
   DynamicDataSheetGrid,
   keyColumn,
   textColumn,
@@ -27,34 +28,57 @@ function App() {
   const [firstNameVisible, setFirstNameVisible] = useState(true)
   const [lastNameVisible, setLastNameVisible] = useState(true)
 
-  const columns: Column<Row>[] = useMemo(() => {
-    let cols = []
-    if (activeVisible) {
-      cols.push({
-        ...keyColumn<Row, 'active'>('active', checkboxColumn),
-        title: 'Active',
-        width: 0.5,
-      })
-    }
+  // const columns: Column<Row>[] = useMemo(() => {
+  //   let cols = []
+  //   if (activeVisible) {
+  //     cols.push({
+  //       ...keyColumn<Row, 'active'>('active', checkboxColumn),
+  //       title: 'Active',
+  //       width: 0.5,
+  //       align: 'center',
+  //     })
+  //   }
 
-    if (firstNameVisible) {
-      cols.push({
-        ...keyColumn<Row, 'firstName'>('firstName', textColumn),
-        title: 'First name',
-      })
-    }
+  //   if (firstNameVisible) {
+  //     cols.push({
+  //       ...keyColumn<Row, 'firstName'>('firstName', textColumn),
+  //       title: 'First name',
+  //       align: 'center',
+  //     })
+  //   }
 
-    if (lastNameVisible) {
-      cols.push({
-        ...keyColumn<Row, 'lastName'>('lastName', textColumn),
-        title: 'Last name',
-        width: 2,
-        disabled: true,
-      })
-    }
+  //   if (lastNameVisible) {
+  //     cols.push({
+  //       ...keyColumn<Row, 'lastName'>('lastName', textColumn),
+  //       title: 'Last name',
+  //       width: 2,
+  //       disabled: true,
+  //       align: 'center',
+  //     })
+  //   }
 
-    return cols
-  }, [activeVisible, firstNameVisible, lastNameVisible])
+  //   return cols
+  // }, [activeVisible, firstNameVisible, lastNameVisible])
+
+  const columns: Column<Row>[] = [
+    {
+      ...keyColumn<Row, 'active'>('active', checkboxColumn),
+      title: 'Active',
+      width: 0.5,
+      align: 'start',
+    },
+    {
+      ...createTextColumn({}),
+      // ...keyColumn<Row, 'firstName'>('firstName', textColumn),
+      title: 'First name',
+    },
+    {
+      ...keyColumn<Row, 'lastName'>('lastName', textColumn),
+      title: 'Last name',
+      width: 2,
+      disabled: true,
+    },
+  ]
 
   return (
     <div
@@ -67,7 +91,7 @@ function App() {
         flexGrow: 1,
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
+      {/* <div style={{ display: 'flex', flexDirection: 'row' }}>
         <button
           onClick={() => {
             setActiveVisible((v) => !v)
@@ -89,7 +113,7 @@ function App() {
         >
           Toggle last name
         </button>
-      </div>
+      </div> */}
       <button onClick={() => setIsEditing((v) => !v)}>Toggle Edit</button>
       <div
         style={{

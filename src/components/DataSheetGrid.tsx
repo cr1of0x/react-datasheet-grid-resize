@@ -114,6 +114,10 @@ export const DataSheetGrid = React.memo(
         listRef.current?.resetAfterIndex(0)
       }, [headerRowHeight, rowHeight])
 
+      useEffect(() => {
+        if (!isEditing) setEditing(false)
+      }, [isEditing])
+
       // Default value is 1 for the border
       const [heightDiff, setHeightDiff] = useDebounceState(1, 100)
 

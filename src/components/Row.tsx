@@ -37,7 +37,6 @@ const RowComponent = React.memo(
 
     const setGivenRowData = useCallback(
       (rowData: any) => {
-        console.log('setGivenRowData active: ', active)
         setRowData(index, rowData, !active)
       },
       [index, setRowData, active]
@@ -118,6 +117,7 @@ const RowComponent = React.memo(
                       ? stopEditing
                       : nullfunc
                   }
+                  align={column.align}
                   insertRowBelow={insertAfterGivenRow}
                   setRowData={setGivenRowData}
                   columnData={column.columnData}

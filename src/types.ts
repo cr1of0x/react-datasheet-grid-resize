@@ -16,6 +16,7 @@ export type CellProps<T, C> = {
   active: boolean
   focus: boolean
   disabled: boolean
+  align?: AlignSetting
   columnData: C
   setRowData: (rowData: T) => void
   stopEditing: (opts?: { nextRow: boolean }) => void
@@ -34,6 +35,7 @@ export type Column<T, C, PasteValue> = {
   width: ColumnWidth
   minWidth: number
   maxWidth?: number
+  align?: AlignSetting
   renderWhenScrolling: boolean
   component: CellComponent<T, C>
   columnData?: C

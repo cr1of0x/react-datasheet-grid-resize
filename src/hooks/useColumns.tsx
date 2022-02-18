@@ -20,21 +20,21 @@ export const useColumns = <T extends any>(
   React.Dispatch<
     React.SetStateAction<
       {
-        id?: string | undefined
+        colIndex: number
         width: number
       }[]
     >
   >
 ] => {
   const [columnsWidth, setColumnsWidth] = useState<
-    { id?: string; width: number }[]
+    { colIndex: number; width: number }[]
   >(
-    columns.map((column) => {
+    columns.map((column, index) => {
       let width = 1
       if (typeof column.width === 'string') {
         width = parseInt(column.width)
       }
-      return { id: column.id, width: width }
+      return { colIndex: index + 1, width: width }
     })
   )
 
@@ -73,9 +73,9 @@ export const useColumns = <T extends any>(
         })
       }
 
-      return partialColumns.map<Column<T, any, any>>((column) => {
+      return partialColumns.map<Column<T, any, any>>((column, index) => {
         let width = column.width ?? 1
-        const col = columnsWidth?.find((x) => x.id === column.id)
+        const col = columnsWidth?.find((x) => x.colIndex === index)
         if (col && col.width) {
           width = `0 0 ${col?.width}px`
         }
