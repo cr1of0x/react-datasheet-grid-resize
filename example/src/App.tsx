@@ -9,6 +9,7 @@ import {
 } from 'react-datasheet-grid'
 import 'react-datasheet-grid/dist/style.css'
 import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
+import { Operation } from '../../dist/types'
 import './style.css'
 
 type Row = {
@@ -76,7 +77,10 @@ function App() {
       ...keyColumn<Row, 'lastName'>('lastName', textColumn),
       title: 'Last name',
       width: 2,
-      disabled: true,
+      disabled: ({ rowData, rowIndex, isCreating }) => {
+        return false
+        // return false;
+      },
     },
   ]
 
@@ -129,15 +133,22 @@ function App() {
                 height: height,
                 width: width,
               }}
+              isRowEmpty={(rowData: any, isCreating: boolean) => {
+                return true
+              }}
               value={data}
-              onChange={setData}
-              onRowSubmit={(
+              onChange={(value: any[], operations: Operation[]) => {
+                console.log('onChange grid: ', operations, value)
+                setData(value)
+              }}
+              onRowSubmit={async (
                 prevValue: Row[],
                 newValue: Row[],
                 rowIndex: number
               ) => {
                 console.log('onRowSubmit: ', prevValue, newValue)
                 setData(newValue)
+                return true
               }}
               columns={columns}
               isEditing={isEditing}

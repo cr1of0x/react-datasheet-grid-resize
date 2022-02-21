@@ -18,6 +18,7 @@ const RowComponent = React.memo(
     active,
     activeColIndex,
     isGridEditing,
+    isCreating,
     editing,
     setRowData,
     deleteRows,
@@ -83,7 +84,7 @@ const RowComponent = React.memo(
           const disabled =
             column.disabled === true ||
             (typeof column.disabled === 'function' &&
-              column.disabled({ rowData: data, rowIndex: index }))
+              column.disabled({ rowData: data, rowIndex: index, isCreating }))
 
           return (
             <Cell
@@ -184,6 +185,7 @@ export const Row = <T extends any>({
       rowClassName={data.rowClassName}
       onDoubleClickRow={data.onDoubleClickRow}
       isGridEditing={data.isGridEditing}
+      isCreating={data.newRowsTracker.includes(index - 1)}
     />
   )
 }

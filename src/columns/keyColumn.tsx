@@ -66,9 +66,9 @@ export const keyColumn = <
   }),
   disabled:
     typeof column.disabled === 'function'
-      ? ({ rowData, rowIndex }) => {
+      ? ({ rowData, rowIndex, isCreating }) => {
           return typeof column.disabled === 'function'
-            ? column.disabled({ rowData: rowData[key], rowIndex })
+            ? column.disabled({ rowData: rowData[key], rowIndex, isCreating })
             : column.disabled ?? false
         }
       : column.disabled,

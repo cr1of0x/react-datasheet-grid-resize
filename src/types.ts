@@ -40,7 +40,9 @@ export type Column<T, C, PasteValue> = {
   component: CellComponent<T, C>
   columnData?: C
   disableKeys: boolean
-  disabled: boolean | ((opt: { rowData: T; rowIndex: number }) => boolean)
+  disabled:
+    | boolean
+    | ((opt: { rowData: T; rowIndex: number; isCreating: boolean }) => boolean)
   cellClassName?:
     | string
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
@@ -62,8 +64,9 @@ export type ListItemData<T> = {
   selectionMaxRow?: number
   isGridEditing: boolean
   editing: boolean
+  newRowsTracker: number[]
   setRowData: (rowIndex: number, item: T, end: boolean) => void
-  deleteRows: (rowMin: number, rowMax?: number) => void
+  deleteRows: (rowMin: number, rowMax?: number, origin?: string) => void
   duplicateRows: (rowMin: number, rowMax?: number) => void
   insertRowAfter: (row: number, count?: number) => void
   stopEditing: (opts?: { nextRow?: boolean }) => void
@@ -113,6 +116,7 @@ export type RowProps<T> = {
   activeColIndex: number | null
   editing: boolean
   isGridEditing: boolean
+  isCreating: boolean
   setRowData: (rowIndex: number, item: T, end: boolean) => void
   deleteRows: (rowMin: number, rowMax?: number) => void
   duplicateRows: (rowMin: number, rowMax?: number) => void
@@ -169,17 +173,23 @@ export type DataSheetGridProps<T> = {
     | string
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
   onChange?: (value: T[], operations: Operation[]) => void
-  onRowSubmit?: (prevValue: T[], newValue: T[], rowIndex: number) => void
+  onRowSubmit?: (
+    prevValue: T[],
+    newValue: T[],
+    rowIndex: number
+  ) => Promise<boolean>
   columns?: Partial<Column<T, any, any>>[]
   gutterColumn?: SimpleColumn<T, any> | false
   stickyRightColumn?: SimpleColumn<T, any>
   height?: number
   rowHeight?: number
   headerRowHeight?: number
+  isRowEmpty?: (rowData: T, isCreating: boolean) => boolean
   addRowsComponent?: (props: AddRowsComponentProps) => JSX.Element
   createRow?: () => T
   duplicateRow?: (opts: { rowData: T; rowIndex: number }) => T
   autoAddRow?: boolean
+  multipleNewRows?: boolean
   lockRows?: boolean
   showAddRowsComponent?: boolean
   disableContextMenu?: boolean

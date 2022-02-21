@@ -51,7 +51,7 @@ import { getAllTabbableElements } from '../utils/tab'
 const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any, any>[] = []
 const DEFAULT_CREATE_ROW: DataSheetGridProps<any>['createRow'] = () => ({})
-const DEFAULT_EMPTY_CALLBACK: () => void = () => null
+const DEFAULT_EMPTY_CALLBACK: () => Promise<boolean> = async () => true
 const DEFAULT_DUPLICATE_ROW: DataSheetGridProps<any>['duplicateRow'] = ({
   rowData,
 }) => ({ ...rowData })
@@ -78,9 +78,11 @@ export const DataSheetGrid = React.memo(
         gutterColumn,
         stickyRightColumn,
         addRowsComponent: AddRowsComponent = AddRows,
+        isRowEmpty,
         createRow = DEFAULT_CREATE_ROW as () => T,
         autoAddRow = false,
         lockRows = false,
+        multipleNewRows = false,
         showAddRowsComponent = false,
         disableExpandSelection = true,
         duplicateRow = DEFAULT_DUPLICATE_ROW,
@@ -181,6 +183,8 @@ export const DataSheetGrid = React.memo(
       const [selectionCell, setSelectionCell] = useDeepEqualState<
         (Cell & ScrollBehavior) | null
       >(null)
+
+      const newRowsTracker = useRef<number[]>([])
 
       // Min and max of the current selection (rectangle defined by the active cell and the selection cell), null when nothing is selected
       const selection = useMemo<Selection | null>(() => {
@@ -327,11 +331,12 @@ export const DataSheetGrid = React.memo(
               ? disabled({
                   rowData: dataRef.current[cell.row],
                   rowIndex: cell.row,
+                  isCreating: newRowsTracker.current?.includes(cell.row),
                 })
               : disabled
           )
         },
-        [columns]
+        [columns, newRowsTracker]
       )
 
       const insertRowAfter = useCallback(
@@ -343,6 +348,7 @@ export const DataSheetGrid = React.memo(
           setSelectionCell(null)
           setEditing(false)
 
+          console.log('create')
           onChange(
             [
               ...dataRef.current.slice(0, row + 1),
@@ -357,6 +363,12 @@ export const DataSheetGrid = React.memo(
               },
             ]
           )
+
+          // Add row index to the creating tracker rows
+          newRowsTracker.current = newRowsTracker.current
+            ?.filter((f) => f !== row + 1)
+            .concat(row + 1)
+
           setActiveCell((a) => ({
             col: firstActiveCol ? 0 : a?.col || 0,
             row: row + count,
@@ -487,24 +499,79 @@ export const DataSheetGrid = React.memo(
 
       const rowDataInit = useRef<{ data: T; rowIndex: number }>()
       const setRowData = useCallback(
-        (rowIndex: number, item: T, end: boolean) => {
+        async (rowIndex: number, item: T, end: boolean) => {
+          console.log('==== SET ROW DATA ==== ', end, rowDataInit.current)
           if (end) {
             if (rowDataInit.current) {
-              onRowSubmit(
-                [
-                  ...dataRef.current?.slice(0, rowIndex),
-                  rowDataInit.current.data,
-                  ...dataRef.current?.slice(rowIndex + 1),
-                ],
-                [
-                  ...dataRef.current?.slice(0, rowIndex),
-                  item,
-                  ...dataRef.current?.slice(rowIndex + 1),
-                ],
-                rowIndex
+              if (
+                await onRowSubmit(
+                  [
+                    ...dataRef.current?.slice(0, rowIndex),
+                    rowDataInit.current.data,
+                    ...dataRef.current?.slice(rowIndex + 1),
+                  ],
+                  [
+                    ...dataRef.current?.slice(0, rowIndex),
+                    item,
+                    ...dataRef.current?.slice(rowIndex + 1),
+                  ],
+                  rowIndex
+                )
+              ) {
+                // If not error on submitted remove row from the creating rows tracker
+                newRowsTracker.current = newRowsTracker.current?.filter(
+                  (f) => f !== rowIndex
+                )
+                rowDataInit.current = undefined
+              }
+            } else {
+              const isCreating = newRowsTracker.current?.includes(rowIndex)
+              const row = data.slice(rowIndex, rowIndex + 1)
+              const empty = row.every((rowData, i) => {
+                if (isRowEmpty) {
+                  return isRowEmpty(
+                    rowData,
+                    newRowsTracker.current?.includes(rowIndex + i)
+                  )
+                } else {
+                  return columns.every((column) =>
+                    column.isCellEmpty({ rowData, rowIndex: i + rowIndex })
+                  )
+                }
+              })
+              console.log(
+                'Should delete: ',
+                rowIndex,
+                row,
+                empty,
+                isCreating,
+                newRowsTracker.current
               )
-              rowDataInit.current = undefined
+
+              if (isCreating && empty && !multipleNewRows) {
+                console.log('delete inside rowdata')
+
+                deleteRows(rowIndex, rowIndex, 'NEW_ROW')
+              }
             }
+            // else if (
+            //   newRowsTracker.includes(rowIndex) &&
+            //   data.slice(rowIndex, rowIndex + 1).every((rowData, i) => {
+            //     if (isRowEmpty) {
+            //       return isRowEmpty(
+            //         rowData,
+            //         newRowsTracker.includes(rowIndex + i)
+            //       )
+            //     } else {
+            //       return columns.every((column) =>
+            //         column.isCellEmpty({ rowData, rowIndex: i + rowIndex })
+            //       )
+            //     }
+            //   })
+            // ) {
+            //   // Delete row
+            //   deleteRows(rowIndex)
+            // }
           } else {
             if (!rowDataInit.current) {
               rowDataInit.current = {
@@ -533,24 +600,47 @@ export const DataSheetGrid = React.memo(
       )
 
       const deleteRows = useCallback(
-        (rowMin: number, rowMax: number = rowMin) => {
+        (rowMin: number, rowMax: number = rowMin, origin?: string) => {
           if (lockRows) {
             return
           }
 
           setEditing(false)
-          setActiveCell((a) => {
-            const row = Math.min(
-              dataRef.current.length - 2 - rowMax + rowMin,
-              rowMin
-            )
+          // setActiveCell((a) => {
+          //   const row = Math.min(
+          //     dataRef.current.length - 2 - rowMax + rowMin,
+          //     rowMin
+          //   )
 
-            if (row < 0) {
-              return null
-            }
+          //   if (row < 0) {
+          //     return null
+          //   }
 
-            return a && { col: a.col, row }
-          })
+          //   return a && { col: a.col, row }
+          // })
+          console.log('DELETE: ', origin)
+          setEditing(false)
+
+          switch (origin) {
+            case 'ARROW_UP':
+              break
+            default:
+              setActiveCell((a) => {
+                const row = Math.min(
+                  dataRef.current.length - 2 - rowMax + rowMin,
+                  rowMin
+                )
+                console.log('DELETE CELL: ', a, row)
+
+                if (row < 0) {
+                  return null
+                }
+
+                return a && { col: a.col, row }
+              })
+              break
+          }
+
           setSelectionCell(null)
           onChange(
             [
@@ -571,6 +661,8 @@ export const DataSheetGrid = React.memo(
 
       const deleteSelection = useCallback(
         (smartDelete = true) => {
+          console.log('SmartDelete: ', smartDelete)
+
           if (!activeCell) {
             return
           }
@@ -579,16 +671,21 @@ export const DataSheetGrid = React.memo(
           const max: Cell = selection?.max || activeCell
 
           if (
-            data
-              .slice(min.row, max.row + 1)
-              .every((rowData, i) =>
-                columns.every((column) =>
+            data.slice(min.row, max.row + 1).every((rowData, i) => {
+              if (isRowEmpty) {
+                return isRowEmpty(
+                  rowData,
+                  newRowsTracker.current?.includes(min.row + i)
+                )
+              } else {
+                return columns.every((column) =>
                   column.isCellEmpty({ rowData, rowIndex: i + min.row })
                 )
-              )
+              }
+            })
           ) {
             if (smartDelete) {
-              deleteRows(min.row, max.row)
+              deleteRows(min.row, max.row, 'DELETE_SELECTION')
             }
             return
           }
@@ -607,6 +704,8 @@ export const DataSheetGrid = React.memo(
               }
             }
           }
+
+          console.log('newData: ', newData)
 
           if (smartDelete && deepEqual(newData, data)) {
             setActiveCell({ col: 0, row: min.row, doNotScrollX: true })
@@ -1441,7 +1540,9 @@ export const DataSheetGrid = React.memo(
                 if (
                   isEditing &&
                   ['ArrowDown'].includes(event.key) &&
-                  activeCell.row == data.length - 1
+                  activeCell.row == data.length - 1 &&
+                  (!newRowsTracker.current?.includes(activeCell.row) ||
+                    multipleNewRows)
                 ) {
                   insertRowAfter(selection?.max.row || activeCell.row)
                 }
@@ -1450,18 +1551,27 @@ export const DataSheetGrid = React.memo(
                   isEditing &&
                   ['ArrowUp'].includes(event.key) &&
                   activeCell.row == data.length - 1 &&
+                  newRowsTracker.current?.includes(activeCell.row) &&
                   data
                     .slice(activeCell.row, activeCell.row + 1)
-                    .every((rowData, i) =>
-                      columns.every((column) =>
-                        column.isCellEmpty({
+                    .every((rowData, i) => {
+                      if (isRowEmpty) {
+                        return isRowEmpty(
                           rowData,
-                          rowIndex: i + activeCell.row,
-                        })
-                      )
-                    )
+                          newRowsTracker.current?.includes(activeCell.row)
+                        )
+                      } else {
+                        return columns.every((column) =>
+                          column.isCellEmpty({
+                            rowData,
+                            rowIndex: i + activeCell.row,
+                          })
+                        )
+                      }
+                    })
                 ) {
-                  deleteRows(activeCell.row)
+                  console.log('delete arrow up')
+                  // deleteRows(activeCell.row, activeCell.row, 'ARROW_UP')
                 }
               }
             }
@@ -1525,9 +1635,15 @@ export const DataSheetGrid = React.memo(
               }
               scrollTo(activeCell)
             }
-          } else if (['Backspace', 'Delete'].includes(event.key)) {
-            if (!editing) {
+          } else if (['Backspace'].includes(event.key)) {
+            if (!editing && isEditing) {
               deleteSelection()
+              event.preventDefault()
+            }
+          } else if (['Delete'].includes(event.key)) {
+            if (!editing && isEditing) {
+              console.log('delete arrow suprimir')
+              deleteRows(activeCell.row, activeCell.row, 'DELETE')
               event.preventDefault()
             }
           } else if (event.key === 'a' && (event.ctrlKey || event.metaKey)) {
@@ -1560,7 +1676,6 @@ export const DataSheetGrid = React.memo(
           scrollTo,
           selection?.max.row,
           selection?.min.row,
-          selectionCell,
           setActiveCell,
           setSelectionCell,
           stopEditing,
@@ -1649,7 +1764,11 @@ export const DataSheetGrid = React.memo(
             toRow: selection.max.row + 1,
             action: () => {
               setContextMenu(null)
-              deleteRows(selection.min.row, selection.max.row)
+              deleteRows(
+                selection.min.row,
+                selection.max.row,
+                'CONTEXT_MENU_ROWS'
+              )
             },
           })
         } else if (activeCell?.row !== undefined) {
@@ -1657,7 +1776,7 @@ export const DataSheetGrid = React.memo(
             type: 'DELETE_ROW',
             action: () => {
               setContextMenu(null)
-              deleteRows(activeCell.row)
+              deleteRows(activeCell.row, activeCell.row, 'CONTEXT_MENU_ROW')
             },
           })
         }
@@ -1720,6 +1839,7 @@ export const DataSheetGrid = React.memo(
         selectionMinRow: selection?.min.row ?? activeCell?.row,
         selectionMaxRow: selection?.max.row ?? activeCell?.row,
         isGridEditing: isEditing,
+        newRowsTracker: newRowsTracker.current,
         editing,
         setRowData,
         deleteRows,
