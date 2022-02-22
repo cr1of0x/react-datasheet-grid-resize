@@ -144,9 +144,10 @@ function App() {
               onRowSubmit={async (
                 prevValue: Row[],
                 newValue: Row[],
-                rowIndex: number
+                rowIndex: number,
+                isCreating: boolean
               ) => {
-                console.log('onRowSubmit: ', prevValue, newValue)
+                console.log('onRowSubmit: ', prevValue, newValue, isCreating)
                 setData(newValue)
                 return true
               }}
@@ -155,7 +156,7 @@ function App() {
               onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
               autoAddRow={true}
               height={height}
-              multipleNewRows={true}
+              multipleNewRows={false}
               // width={width}
             />
           )}

@@ -180,7 +180,8 @@ export type DataSheetGridProps<T> = {
   onRowSubmit?: (
     prevValue: T[],
     newValue: T[],
-    rowIndex: number
+    rowIndex: number,
+    isCreating: boolean
   ) => Promise<boolean>
   columns?: Partial<Column<T, any, any>>[]
   gutterColumn?: SimpleColumn<T, any> | false
