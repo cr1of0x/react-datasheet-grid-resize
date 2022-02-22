@@ -66,7 +66,11 @@ export type ListItemData<T> = {
   editing: boolean
   newRowsTracker: number[]
   setRowData: (rowIndex: number, item: T, end: boolean) => void
-  deleteRows: (rowMin: number, rowMax?: number, origin?: string) => void
+  deleteRows: (
+    rowMin: number,
+    rowMax?: number,
+    changeActiveCell?: boolean
+  ) => void
   duplicateRows: (rowMin: number, rowMax?: number) => void
   insertRowAfter: (row: number, count?: number) => void
   stopEditing: (opts?: { nextRow?: boolean }) => void

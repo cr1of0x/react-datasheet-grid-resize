@@ -155,6 +155,7 @@ function App() {
               onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
               autoAddRow={true}
               height={height}
+              multipleNewRows={true}
               // width={width}
             />
           )}
