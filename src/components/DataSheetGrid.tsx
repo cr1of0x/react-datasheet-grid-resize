@@ -1974,6 +1974,7 @@ export const DataSheetGrid = React.memo(
         activeCell?.col,
         activeCell?.row,
         columns,
+        data,
       ])
 
       console.log('render grid')
