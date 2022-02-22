@@ -169,6 +169,11 @@ export type Operation = {
   toRowIndex: number
 }
 
+export type OperationSubmit = {
+  type: 'UPDATE' | 'CREATE' | 'DELETE' | 'DELETE_NEW'
+  index: number
+}
+
 export type DataSheetGridProps<T> = {
   value?: T[]
   style?: React.CSSProperties
@@ -181,7 +186,7 @@ export type DataSheetGridProps<T> = {
     prevValue: T[],
     newValue: T[],
     rowIndex: number,
-    isCreating: boolean
+    operation: OperationSubmit
   ) => Promise<boolean>
   columns?: Partial<Column<T, any, any>>[]
   gutterColumn?: SimpleColumn<T, any> | false

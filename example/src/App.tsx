@@ -9,7 +9,7 @@ import {
 } from 'react-datasheet-grid'
 import 'react-datasheet-grid/dist/style.css'
 import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
-import { Operation } from '../../dist/types'
+import { Operation, OperationSubmit } from '../../dist/types'
 import './style.css'
 
 type Row = {
@@ -69,8 +69,7 @@ function App() {
       align: 'start',
     },
     {
-      ...createTextColumn({}),
-      // ...keyColumn<Row, 'firstName'>('firstName', textColumn),
+      ...keyColumn<Row, 'firstName'>('firstName', textColumn),
       title: 'First name',
     },
     {
@@ -134,7 +133,7 @@ function App() {
                 width: width,
               }}
               isRowEmpty={(rowData: any, isCreating: boolean) => {
-                return true
+                return !rowData.firstName
               }}
               value={data}
               onChange={(value: any[], operations: Operation[]) => {
@@ -145,9 +144,9 @@ function App() {
                 prevValue: Row[],
                 newValue: Row[],
                 rowIndex: number,
-                isCreating: boolean
+                operation: OperationSubmit
               ) => {
-                console.log('onRowSubmit: ', prevValue, newValue, isCreating)
+                console.log('onRowSubmit: ', prevValue, newValue, operation)
                 setData(newValue)
                 return true
               }}
@@ -156,7 +155,7 @@ function App() {
               onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
               autoAddRow={true}
               height={height}
-              multipleNewRows={false}
+              multipleNewRows={true}
               // width={width}
             />
           )}

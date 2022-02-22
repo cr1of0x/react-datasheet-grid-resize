@@ -15,6 +15,7 @@ import {
   HeaderContextType,
   ListItemData,
   Operation,
+  OperationSubmit,
   Selection,
   SelectionContextType,
 } from '../types'
@@ -497,7 +498,7 @@ export const DataSheetGrid = React.memo(
       }, [activeCell, scrollTo])
 
       const deleteRows = useCallback(
-        (
+        async (
           rowMin: number,
           rowMax: number = rowMin,
           changeActiveCell: boolean = true
@@ -509,36 +510,48 @@ export const DataSheetGrid = React.memo(
           setEditing(false)
 
           setSelectionCell(null)
-          onChange(
+
+          let operation: OperationSubmit
+          if (newRowsTracker.current?.includes(rowMin)) {
+            operation = { type: 'DELETE_NEW', index: rowMin }
+          } else {
+            operation = { type: 'DELETE', index: rowMin }
+          }
+
+          // Get before onRowSubmit
+          const dataLength = dataRef.current.length
+          console.log('... R ... ', dataLength)
+          await onRowSubmit(
+            [...dataRef.current],
             [
               ...dataRef.current.slice(0, rowMin),
               ...dataRef.current.slice(rowMax + 1),
             ],
-            [
-              {
-                type: 'DELETE',
-                fromRowIndex: rowMin,
-                toRowIndex: rowMax + 1,
-              },
-            ]
+            rowMin,
+            operation
           )
 
-          if (changeActiveCell) {
+          console.log('... A ... ', dataRef.current.length)
+
+          console.log(
+            'delete change active cell: ',
+            changeActiveCell,
+            activeCell
+          )
+          // Only change active cell if set to true or the current active cell row is bigger than
+          // the lenght of the rows
+          if (changeActiveCell || activeCell?.row === dataLength - 1) {
             setActiveCell((a) => {
-              const row = Math.min(
-                dataRef.current.length - 1 - rowMax + rowMin,
-                rowMin
-              )
+              const row = Math.min(dataLength - 2 - rowMax + rowMin, rowMin)
 
               if (row < 0) {
                 return null
               }
-
               return a && { col: a.col, row }
             })
           }
         },
-        [lockRows, onChange, setActiveCell, setSelectionCell]
+        [lockRows, setActiveCell, setSelectionCell, onRowSubmit, activeCell]
       )
 
       const rowDataInit = useRef<{ data: T; rowIndex: number }>()
@@ -547,8 +560,30 @@ export const DataSheetGrid = React.memo(
           console.log('==== SET ROW DATA ==== ', end, rowDataInit.current)
           if (end) {
             // We were editing a row and we changed to another row
-            if (rowDataInit.current) {
-              // The row we we're editing was chaged
+            const row = data.slice(rowIndex, rowIndex + 1)
+            const isEmpty = row.every((rowData, i) => {
+              if (isRowEmpty) {
+                return isRowEmpty(
+                  rowData,
+                  newRowsTracker.current?.includes(rowIndex + i)
+                )
+              } else {
+                return columns.every((column) =>
+                  column.isCellEmpty({ rowData, rowIndex: i + rowIndex })
+                )
+              }
+            })
+
+            if (rowDataInit.current && !isEmpty) {
+              // The row we we're editing was changed
+
+              let operation: OperationSubmit
+              if (newRowsTracker.current?.includes(rowIndex)) {
+                operation = { index: rowIndex, type: 'CREATE' }
+              } else {
+                operation = { index: rowIndex, type: 'UPDATE' }
+              }
+
               if (
                 await onRowSubmit(
                   [
@@ -562,7 +597,7 @@ export const DataSheetGrid = React.memo(
                     ...dataRef.current?.slice(rowIndex + 1),
                   ],
                   rowIndex,
-                  newRowsTracker.current?.includes(rowIndex)
+                  operation
                 )
               ) {
                 // If not error on submitted remove row from the creating rows tracker
@@ -574,25 +609,13 @@ export const DataSheetGrid = React.memo(
             } else {
               // The row we we're editing was not changed
               const isCreating = newRowsTracker.current?.includes(rowIndex)
-              const row = data.slice(rowIndex, rowIndex + 1)
-              const empty = row.every((rowData, i) => {
-                if (isRowEmpty) {
-                  return isRowEmpty(
-                    rowData,
-                    newRowsTracker.current?.includes(rowIndex + i)
-                  )
-                } else {
-                  return columns.every((column) =>
-                    column.isCellEmpty({ rowData, rowIndex: i + rowIndex })
-                  )
-                }
-              })
 
               // We check if the row we we're editing is new and empty
-              if (isCreating && empty) {
+              if (isCreating) {
                 // If we cannot create multiple new rows and we are on the last row we delete the previous row since
                 // is empty and we we're creating it
-                if (!multipleNewRows && rowIndex === data.length - 1) {
+                // if (!multipleNewRows && rowIndex === data.length - 1) {
+                if (!multipleNewRows) {
                   deleteRows(rowIndex, rowIndex, false)
                   // Remove the index from the tracker
                   newRowsTracker.current = newRowsTracker.current?.filter(
@@ -613,7 +636,7 @@ export const DataSheetGrid = React.memo(
                         ...dataRef.current?.slice(rowIndex + 1),
                       ],
                       rowIndex,
-                      newRowsTracker.current?.includes(rowIndex)
+                      { type: 'CREATE', index: rowIndex }
                     )
                   ) {
                     // If not error on submitted remove row from the creating rows tracker
@@ -1411,6 +1434,12 @@ export const DataSheetGrid = React.memo(
       )
       useDocumentEventListener('mousemove', onMouseMove)
 
+      // const onWheel = useCallback((event: WheelEvent) => {
+      //   console.log('onWheel: ', event)
+      //   console.log('onWheel: ', (event as any).wheelDelta)
+      // }, [])
+      // useDocumentEventListener('wheel', onWheel)
+
       const onKeyDown = useCallback(
         (event: KeyboardEvent) => {
           if (!activeCell) {
@@ -1603,6 +1632,7 @@ export const DataSheetGrid = React.memo(
             }
           } else if (
             isEditing &&
+            newRowsTracker.current.length === 0 &&
             ((event.key === 'Enter' &&
               !event.ctrlKey &&
               !event.metaKey &&
@@ -1610,6 +1640,7 @@ export const DataSheetGrid = React.memo(
               event.shiftKey) ||
               event.key === 'Insert')
           ) {
+            // Only insert row when editing and when there is no new rows already created
             insertRowAfter(selection?.max.row || activeCell.row)
           } else if (
             event.key === 'd' &&
