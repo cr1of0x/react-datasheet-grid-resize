@@ -24,6 +24,7 @@ function App() {
     { active: true, firstName: 'Elon', lastName: 'Musk' },
     { active: false, firstName: 'Jeff', lastName: 'Bezos' },
   ])
+  const [isGridLoading, setIsGridLoading] = useState(false)
 
   const [activeVisible, setActiveVisible] = useState(true)
   const [firstNameVisible, setFirstNameVisible] = useState(true)
@@ -83,12 +84,15 @@ function App() {
     },
   ]
 
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms))
+
   return (
     <div
       style={{
         maxWidth: '900px',
         background: '#f3f3f3',
-        height: '500px',
+        height: '300px',
         display: 'flex',
         flexDirection: 'column',
         flexGrow: 1,
@@ -135,6 +139,7 @@ function App() {
               isRowEmpty={(rowData: any, isCreating: boolean) => {
                 return !rowData.firstName
               }}
+              isLoading={isGridLoading}
               value={data}
               onChange={(value: any[], operations: Operation[]) => {
                 console.log('onChange grid: ', operations, value)
@@ -147,7 +152,11 @@ function App() {
                 operation: OperationSubmit
               ) => {
                 console.log('onRowSubmit: ', prevValue, newValue, operation)
+                setIsGridLoading(true)
+                await sleep(5000)
+                console.log('after sleep')
                 setData(newValue)
+                setIsGridLoading(false)
                 return true
               }}
               columns={columns}
@@ -156,6 +165,9 @@ function App() {
               autoAddRow={true}
               height={height}
               multipleNewRows={true}
+              footerComponent={() => (
+                <div>{isGridLoading ? 'true' : 'false'}</div>
+              )}
               // width={width}
             />
           )}

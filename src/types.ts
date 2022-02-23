@@ -196,6 +196,7 @@ export type DataSheetGridProps<T> = {
   headerRowHeight?: number
   isRowEmpty?: (rowData: T, isCreating: boolean) => boolean
   addRowsComponent?: (props: AddRowsComponentProps) => JSX.Element
+  footerComponent?: (props: any) => JSX.Element
   createRow?: () => T
   duplicateRow?: (opts: { rowData: T; rowIndex: number }) => T
   autoAddRow?: boolean
@@ -204,6 +205,7 @@ export type DataSheetGridProps<T> = {
   showAddRowsComponent?: boolean
   disableContextMenu?: boolean
   disableExpandSelection?: boolean
+  isLoading?: boolean
   contextMenuComponent?: (props: ContextMenuComponentProps) => JSX.Element
   onFocus?: (opts: { cell: CellWithId }) => void
   onBlur?: (opts: { cell: CellWithId }) => void

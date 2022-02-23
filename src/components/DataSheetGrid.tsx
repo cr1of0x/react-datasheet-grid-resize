@@ -79,6 +79,7 @@ export const DataSheetGrid = React.memo(
         gutterColumn,
         stickyRightColumn,
         addRowsComponent: AddRowsComponent = AddRows,
+        footerComponent: FooterComponent,
         isRowEmpty,
         createRow = DEFAULT_CREATE_ROW as () => T,
         autoAddRow = false,
@@ -86,6 +87,7 @@ export const DataSheetGrid = React.memo(
         multipleNewRows = false,
         showAddRowsComponent = false,
         disableExpandSelection = true,
+        isLoading = false,
         duplicateRow = DEFAULT_DUPLICATE_ROW,
         contextMenuComponent: ContextMenuComponent = ContextMenu,
         disableContextMenu: disableContextMenuRaw = false,
@@ -120,6 +122,9 @@ export const DataSheetGrid = React.memo(
       useEffect(() => {
         if (!isEditing) setEditing(false)
       }, [isEditing])
+
+      const isLoadingRef = useRef<boolean>(isLoading)
+      isLoadingRef.current = isLoading
 
       // Default value is 1 for the border
       const [heightDiff, setHeightDiff] = useDebounceState(1, 100)
@@ -520,35 +525,30 @@ export const DataSheetGrid = React.memo(
 
           // Get before onRowSubmit
           const dataLength = dataRef.current.length
-          console.log('... R ... ', dataLength)
-          await onRowSubmit(
-            [...dataRef.current],
-            [
-              ...dataRef.current.slice(0, rowMin),
-              ...dataRef.current.slice(rowMax + 1),
-            ],
-            rowMin,
-            operation
-          )
 
-          console.log('... A ... ', dataRef.current.length)
+          if (
+            await onRowSubmit(
+              [...dataRef.current],
+              [
+                ...dataRef.current.slice(0, rowMin),
+                ...dataRef.current.slice(rowMax + 1),
+              ],
+              rowMin,
+              operation
+            )
+          ) {
+            // Only change active cell if set to true or the current active cell row is bigger than
+            // the lenght of the rows
+            if (changeActiveCell || activeCell?.row === dataLength - 1) {
+              setActiveCell((a) => {
+                const row = Math.min(dataLength - 2 - rowMax + rowMin, rowMin)
 
-          console.log(
-            'delete change active cell: ',
-            changeActiveCell,
-            activeCell
-          )
-          // Only change active cell if set to true or the current active cell row is bigger than
-          // the lenght of the rows
-          if (changeActiveCell || activeCell?.row === dataLength - 1) {
-            setActiveCell((a) => {
-              const row = Math.min(dataLength - 2 - rowMax + rowMin, rowMin)
-
-              if (row < 0) {
-                return null
-              }
-              return a && { col: a.col, row }
-            })
+                if (row < 0) {
+                  return null
+                }
+                return a && { col: a.col, row }
+              })
+            }
           }
         },
         [lockRows, setActiveCell, setSelectionCell, onRowSubmit, activeCell]
@@ -1045,7 +1045,10 @@ export const DataSheetGrid = React.memo(
 
       const onMouseDown = useCallback(
         (event: MouseEvent) => {
-          if (contextMenu && contextMenuItems.length) {
+          if (
+            (contextMenu && contextMenuItems.length) ||
+            isLoadingRef.current === true
+          ) {
             return
           }
 
@@ -1442,7 +1445,7 @@ export const DataSheetGrid = React.memo(
 
       const onKeyDown = useCallback(
         (event: KeyboardEvent) => {
-          if (!activeCell) {
+          if (!activeCell || isLoadingRef.current === true) {
             return
           }
 
@@ -1977,6 +1980,7 @@ export const DataSheetGrid = React.memo(
         data,
       ])
 
+      const footerRef = useRef<HTMLDivElement>(null)
       console.log('render grid')
       return (
         <div className={className} style={style}>
@@ -1994,7 +1998,7 @@ export const DataSheetGrid = React.memo(
                 className="dsg-container"
                 ref={listRef}
                 width={'100%'}
-                height={displayHeight}
+                height={displayHeight - (footerRef.current?.clientHeight ?? 0)}
                 itemCount={data.length + 1}
                 itemSize={itemSize}
                 estimatedItemSize={rowHeight}
@@ -2009,6 +2013,7 @@ export const DataSheetGrid = React.memo(
               />
             </SelectionContext.Provider>
           </HeaderContext.Provider>
+
           <div
             ref={afterTabIndexRef}
             tabIndex={rawColumns.length && data.length ? 0 : undefined}
@@ -2020,6 +2025,11 @@ export const DataSheetGrid = React.memo(
               })
             }}
           />
+          {FooterComponent && (
+            <div ref={footerRef}>
+              <FooterComponent />
+            </div>
+          )}
           {showAddRowsComponent && !lockRows && (
             <AddRowsComponent
               addRows={(count) => insertRowAfter(data.length - 1, count)}
