@@ -76,6 +76,7 @@ export type ListItemData<T> = {
   stopEditing: (opts?: { nextRow?: boolean }) => void
   getContextMenuItems: () => ContextMenuItem[]
   onDoubleClickRow?: (rowData: T) => void
+  isDataEmpty: boolean
   rowClassName?:
     | string
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
@@ -128,6 +129,7 @@ export type RowProps<T> = {
   stopEditing?: (opts?: { nextRow?: boolean }) => void
   getContextMenuItems: () => ContextMenuItem[]
   onDoubleClickRow?: (rowData: T) => void
+  isDataEmpty: boolean
   rowClassName?:
     | string
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)

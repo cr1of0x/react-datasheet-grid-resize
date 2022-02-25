@@ -21,8 +21,8 @@ type Row = {
 function App() {
   const [isEditing, setIsEditing] = useState(false)
   const [data, setData] = useState<Row[]>([
-    { active: true, firstName: 'Elon', lastName: 'Musk' },
-    { active: false, firstName: 'Jeff', lastName: 'Bezos' },
+    // { active: true, firstName: 'Elon', lastName: 'Musk' },
+    // { active: false, firstName: 'Jeff', lastName: 'Bezos' },
   ])
   const [isGridLoading, setIsGridLoading] = useState(false)
 
@@ -153,11 +153,11 @@ function App() {
               ) => {
                 console.log('onRowSubmit: ', prevValue, newValue, operation)
                 setIsGridLoading(true)
-                await sleep(5000)
+                await sleep(1000)
                 console.log('after sleep')
                 setData(newValue)
                 setIsGridLoading(false)
-                return true
+                return false
               }}
               columns={columns}
               isEditing={isEditing}

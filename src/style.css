@@ -12,6 +12,7 @@
   --dsg-cell-background-color: white;
   --dsg-cell-active-background-color: #cbe5f2;
   --dsg-cell-disabled-background-color: rgb(250, 250, 250);
+  --dsg-row-initial-background-color: #e2f5e2;
   --dsg-transition-duration: 0.1s;
   --dsg-expand-rows-indicator-width: 10px;
   --dsg-scroll-shadow-width: 7px;
@@ -89,6 +90,10 @@
 
 .dsg-cell-disabled {
   background: var(--dsg-cell-disabled-background-color);
+}
+
+.dsg-cell-initial {
+  background: var(--dsg-row-initial-background-color);
 }
 
 .dsg-cell-header,

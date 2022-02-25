@@ -28,6 +28,7 @@ const RowComponent = React.memo(
     getContextMenuItems,
     onDoubleClickRow,
     rowClassName,
+    isDataEmpty,
   }: RowProps<any>) => {
     const firstRender = useFirstRender()
 
@@ -99,7 +100,8 @@ const RowComponent = React.memo(
                 !column.renderWhenScrolling && renderLight && 'dsg-cell-light',
                 typeof column.cellClassName === 'function'
                   ? column.cellClassName({ rowData: data, rowIndex: index })
-                  : column.cellClassName
+                  : column.cellClassName,
+                isDataEmpty ? 'dsg-cell-initial' : null
               )}
             >
               {(column.renderWhenScrolling || !renderLight) && (
@@ -156,6 +158,7 @@ export const Row = <T extends any>({
     <RowComponent
       index={index - 1}
       data={data.data[index - 1]}
+      isDataEmpty={data.isDataEmpty}
       columns={data.columns}
       style={{
         ...style,
