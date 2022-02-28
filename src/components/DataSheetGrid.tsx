@@ -114,6 +114,8 @@ export const DataSheetGrid = React.memo(
       const outerRef = useRef<HTMLElement>(null)
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
       const afterTabIndexRef = useRef<HTMLDivElement>(null)
+      // Control the data of a row edited before submitting
+      const rowDataInit = useRef<{ data: T; rowIndex: number }>()
 
       const data: T[] = useMemo((): T[] => {
         return datagrid.length === 0 ? [{} as any] : datagrid
@@ -121,8 +123,11 @@ export const DataSheetGrid = React.memo(
 
       const isDataEmpty = useRef(false)
       useEffect(() => {
-        isDataEmpty.current = datagrid.length === 0
-      }, [])
+        // If the datagrid lenght is 0 and no row was changed it means the data we received new data from outside
+        // so we initialize the isDataEmpty
+
+        if (!rowDataInit.current) isDataEmpty.current = datagrid.length === 0
+      }, [datagrid, rowDataInit])
 
       useEffect(() => {
         listRef.current?.resetAfterIndex(0)
@@ -336,6 +341,7 @@ export const DataSheetGrid = React.memo(
 
       const dataRef = useRef(data)
       dataRef.current = data
+      console.log('dataRef: ', dataRef.current)
 
       const isCellDisabled = useCallback(
         (cell: Cell): boolean => {
@@ -423,8 +429,17 @@ export const DataSheetGrid = React.memo(
         ]
       )
 
+      // True when an error ocurred on submit, used to disable submittion of another row when navigating back
+      // to the row that gave error
+      const forbidSubmitOnError = useRef(false)
+
       const submitRowData = useCallback(
         async (rowIndex: number, item: T, iniItem?: T) => {
+          if (forbidSubmitOnError.current) {
+            forbidSubmitOnError.current = false
+            return false
+          }
+
           const row = data.slice(rowIndex, rowIndex + 1)
           const isEmpty = row.every((rowData, i) => {
             if (isRowEmpty) {
@@ -444,7 +459,10 @@ export const DataSheetGrid = React.memo(
             // The row we we're editing has changed
 
             let operation: OperationSubmit
-            if (newRowsTracker.current?.includes(rowIndex) || isDataEmpty) {
+            if (
+              newRowsTracker.current?.includes(rowIndex) ||
+              isDataEmpty.current
+            ) {
               operation = { index: rowIndex, type: 'CREATE' }
             } else {
               operation = { index: rowIndex, type: 'UPDATE' }
@@ -474,6 +492,8 @@ export const DataSheetGrid = React.memo(
               )
               rowDataInit.current = undefined
             } else {
+              forbidSubmitOnError.current = true
+
               // return to the cell that we tried to submit
               setActiveCell((a) => {
                 const row = rowIndex
@@ -527,6 +547,8 @@ export const DataSheetGrid = React.memo(
                   )
                   rowDataInit.current = undefined
                 } else {
+                  forbidSubmitOnError.current = true
+
                   // return to the cell that we tried to submit
                   setActiveCell((a) => {
                     const row = rowIndex
@@ -566,6 +588,7 @@ export const DataSheetGrid = React.memo(
 
           // submit row data before creating a new row
           if (activeCell) {
+            console.log('insertRowAfter submit: ', dataRef.current)
             const success = await submitRowData(
               activeCell.row,
               data.slice(activeCell.row, activeCell.row + 1)[0],
@@ -579,6 +602,8 @@ export const DataSheetGrid = React.memo(
 
           setSelectionCell(null)
           setEditing(false)
+
+          console.log('insertRowAfter onChange: ', dataRef.current)
 
           onChange(
             [
@@ -737,10 +762,12 @@ export const DataSheetGrid = React.memo(
         }
       }, [activeCell, scrollTo])
 
-      const rowDataInit = useRef<{ data: T; rowIndex: number }>()
       const setRowData = useCallback(
         async (rowIndex: number, item: T, submit: boolean) => {
           console.log('==== SET ROW DATA ==== ', submit, rowDataInit.current)
+          // if (rowDataInit?.current?.rowIndex != rowIndex)
+          //   return;
+
           if (submit) {
             await submitRowData(rowIndex, item, rowDataInit.current?.data)
           } else {

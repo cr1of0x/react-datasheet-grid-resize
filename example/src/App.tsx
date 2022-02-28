@@ -20,10 +20,10 @@ type Row = {
 
 function App() {
   const [isEditing, setIsEditing] = useState(false)
-  const [data, setData] = useState<Row[]>() //[
-  // { active: true, firstName: 'Elon', lastName: 'Musk' },
-  // { active: false, firstName: 'Jeff', lastName: 'Bezos' },
-  //]
+  const [data, setData] = useState<Row[]>([
+    // { active: true, firstName: 'Elon', lastName: 'Musk' },
+    // { active: false, firstName: 'Jeff', lastName: 'Bezos' },
+  ])
   const [isGridLoading, setIsGridLoading] = useState(false)
 
   const [activeVisible, setActiveVisible] = useState(true)
@@ -152,11 +152,18 @@ function App() {
                 operation: OperationSubmit
               ) => {
                 console.log('onRowSubmit: ', prevValue, newValue, operation)
-                setIsGridLoading(true)
-                await sleep(1000)
-                console.log('after sleep')
-                setData(newValue)
-                setIsGridLoading(false)
+                // setIsGridLoading(true)
+                // await sleep(1000)
+                // setData(newValue)
+
+                let rdata = newValue[rowIndex]
+                setData([
+                  ...newValue?.slice(0, rowIndex),
+                  { ...rdata, lastName: 'just a test' },
+                  ...newValue?.slice(rowIndex + 1),
+                ])
+
+                // setIsGridLoading(false)
                 return true
               }}
               columns={columns}

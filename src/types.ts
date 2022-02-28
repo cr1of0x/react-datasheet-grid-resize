@@ -166,7 +166,7 @@ export type ContextMenuComponentProps = {
 }
 
 export type Operation = {
-  type: 'UPDATE' | 'DELETE' | 'CREATE' | 'UPDATE_ROW'
+  type: 'UPDATE' | 'CREATE'
   fromRowIndex: number
   toRowIndex: number
 }
