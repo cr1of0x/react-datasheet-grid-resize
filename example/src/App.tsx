@@ -20,10 +20,10 @@ type Row = {
 
 function App() {
   const [isEditing, setIsEditing] = useState(false)
-  const [data, setData] = useState<Row[]>([
-    // { active: true, firstName: 'Elon', lastName: 'Musk' },
-    // { active: false, firstName: 'Jeff', lastName: 'Bezos' },
-  ])
+  const [data, setData] = useState<Row[]>() //[
+  // { active: true, firstName: 'Elon', lastName: 'Musk' },
+  // { active: false, firstName: 'Jeff', lastName: 'Bezos' },
+  //]
   const [isGridLoading, setIsGridLoading] = useState(false)
 
   const [activeVisible, setActiveVisible] = useState(true)
@@ -157,7 +157,7 @@ function App() {
                 console.log('after sleep')
                 setData(newValue)
                 setIsGridLoading(false)
-                return false
+                return true
               }}
               columns={columns}
               isEditing={isEditing}

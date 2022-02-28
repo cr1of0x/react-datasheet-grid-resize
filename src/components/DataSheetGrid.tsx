@@ -49,7 +49,7 @@ import {
 } from '../utils/typeCheck'
 import { getAllTabbableElements } from '../utils/tab'
 
-const DEFAULT_DATA: any[] = [{}]
+const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any, any>[] = []
 const DEFAULT_CREATE_ROW: DataSheetGridProps<any>['createRow'] = () => ({})
 const DEFAULT_EMPTY_CALLBACK: () => Promise<boolean> = async () => true
@@ -67,7 +67,7 @@ export const DataSheetGrid = React.memo(
   React.forwardRef<DataSheetGridRef, DataSheetGridProps<any>>(
     <T extends any>(
       {
-        value: data = DEFAULT_DATA,
+        value: datagrid = DEFAULT_DATA,
         className,
         style,
         height: maxHeight, //= 400,
@@ -115,8 +115,14 @@ export const DataSheetGrid = React.memo(
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
       const afterTabIndexRef = useRef<HTMLDivElement>(null)
 
-      const isDataEmpty = data.length === 0
-      data = data.length === 0 ? [{} as any] : data
+      const data: T[] = useMemo((): T[] => {
+        return datagrid.length === 0 ? [{} as any] : datagrid
+      }, [datagrid])
+
+      const isDataEmpty = useRef(false)
+      useEffect(() => {
+        isDataEmpty.current = datagrid.length === 0
+      }, [])
 
       useEffect(() => {
         listRef.current?.resetAfterIndex(0)
@@ -348,10 +354,213 @@ export const DataSheetGrid = React.memo(
         [columns, newRowsTracker]
       )
 
+      const deleteRows = useCallback(
+        async (
+          rowMin: number,
+          rowMax: number = rowMin,
+          changeActiveCell: boolean = true
+        ) => {
+          if (lockRows || isDataEmpty.current) {
+            return
+          }
+
+          setEditing(false)
+
+          setSelectionCell(null)
+
+          let operation: OperationSubmit
+          if (newRowsTracker.current?.includes(rowMin)) {
+            operation = { type: 'DELETE_NEW', index: rowMin }
+          } else {
+            operation = { type: 'DELETE', index: rowMin }
+          }
+
+          // Get before onRowSubmit
+          const dataLength = dataRef.current.length
+
+          if (
+            await onRowSubmit(
+              [...dataRef.current],
+              [
+                ...dataRef.current.slice(0, rowMin),
+                ...dataRef.current.slice(rowMax + 1),
+              ],
+              rowMin,
+              operation
+            )
+          ) {
+            // Only change active cell if set to true or the current active cell row is bigger than
+            // the lenght of the rows
+            if (changeActiveCell || activeCell?.row === dataLength - 1) {
+              setActiveCell((a) => {
+                const row = Math.min(dataLength - 2 - rowMax + rowMin, rowMin)
+
+                if (row < 0) {
+                  return null
+                }
+                return a && { col: a.col, row }
+              })
+            }
+          } else {
+            // return to the cell that we tried to submit
+            setActiveCell((a) => {
+              const row = rowMin
+
+              if (row < 0) {
+                return null
+              }
+              return a && { col: a.col, row }
+            })
+          }
+        },
+        [
+          lockRows,
+          setActiveCell,
+          setSelectionCell,
+          onRowSubmit,
+          activeCell,
+          isDataEmpty,
+        ]
+      )
+
+      const submitRowData = useCallback(
+        async (rowIndex: number, item: T, iniItem?: T) => {
+          const row = data.slice(rowIndex, rowIndex + 1)
+          const isEmpty = row.every((rowData, i) => {
+            if (isRowEmpty) {
+              return isRowEmpty(
+                rowData,
+                newRowsTracker.current?.includes(rowIndex + i)
+              )
+            } else {
+              return columns.every((column) =>
+                column.isCellEmpty({ rowData, rowIndex: i + rowIndex })
+              )
+            }
+          })
+
+          // check if the row has changed and is not empty
+          if (iniItem && !isEmpty && !deepEqual(rowDataInit.current, item)) {
+            // The row we we're editing has changed
+
+            let operation: OperationSubmit
+            if (newRowsTracker.current?.includes(rowIndex) || isDataEmpty) {
+              operation = { index: rowIndex, type: 'CREATE' }
+            } else {
+              operation = { index: rowIndex, type: 'UPDATE' }
+            }
+
+            const submitted = await onRowSubmit(
+              [
+                ...dataRef.current?.slice(0, rowIndex),
+                iniItem,
+                ...dataRef.current?.slice(rowIndex + 1),
+              ],
+              [
+                ...dataRef.current?.slice(0, rowIndex),
+                item,
+                ...dataRef.current?.slice(rowIndex + 1),
+              ],
+              rowIndex,
+              operation
+            )
+
+            if (submitted) {
+              // If we submitted succesfully data is no longer empty
+              isDataEmpty.current = false
+              // If not error on submitted remove row from the creating rows tracker
+              newRowsTracker.current = newRowsTracker.current?.filter(
+                (f) => f !== rowIndex
+              )
+              rowDataInit.current = undefined
+            } else {
+              // return to the cell that we tried to submit
+              setActiveCell((a) => {
+                const row = rowIndex
+
+                if (row < 0) {
+                  return null
+                }
+                return a && { col: a.col, row }
+              })
+            }
+
+            return submitted
+          } else {
+            // The row we we're editing was not changed
+            const isCreating = newRowsTracker.current?.includes(rowIndex)
+
+            // We check if the row we we're editing is new and empty
+            if (isCreating) {
+              // If we cannot create multiple new rows and we are on the last row we delete the previous row since
+              // is empty and we we're creating it
+              // if (!multipleNewRows && rowIndex === data.length - 1) {
+              if (!multipleNewRows) {
+                deleteRows(rowIndex, rowIndex, false)
+                // Remove the index from the tracker
+                newRowsTracker.current = newRowsTracker.current?.filter(
+                  (f) => f !== rowIndex
+                )
+              } else {
+                // If we can create multiple rows we submit the changes
+                const created = await onRowSubmit(
+                  [
+                    ...dataRef.current?.slice(0, rowIndex),
+                    item,
+                    ...dataRef.current?.slice(rowIndex + 1),
+                  ],
+                  [
+                    ...dataRef.current?.slice(0, rowIndex),
+                    item,
+                    ...dataRef.current?.slice(rowIndex + 1),
+                  ],
+                  rowIndex,
+                  { type: 'CREATE', index: rowIndex }
+                )
+
+                if (created) {
+                  // If we submitted succesfully data is no longer empty
+                  isDataEmpty.current = false
+                  // If not error on submitted remove row from the creating rows tracker
+                  newRowsTracker.current = newRowsTracker.current?.filter(
+                    (f) => f !== rowIndex
+                  )
+                  rowDataInit.current = undefined
+                } else {
+                  // return to the cell that we tried to submit
+                  setActiveCell((a) => {
+                    const row = rowIndex
+
+                    if (row < 0) {
+                      return null
+                    }
+                    return a && { col: a.col, row }
+                  })
+                }
+
+                return created
+              }
+            }
+
+            // If we don't do anything return true
+            return true
+          }
+        },
+        [
+          onRowSubmit,
+          columns,
+          data,
+          deleteRows,
+          isRowEmpty,
+          multipleNewRows,
+          setActiveCell,
+        ]
+      )
+
       const insertRowAfter = useCallback(
         async (row: number, count = 1, firstActiveCol: boolean = false) => {
           // If data is empty don't allow to insert new rows
-          if (lockRows || isDataEmpty) {
+          if (lockRows) {
             return
           }
 
@@ -362,8 +571,10 @@ export const DataSheetGrid = React.memo(
               data.slice(activeCell.row, activeCell.row + 1)[0],
               rowDataInit.current?.data
             )
+
             // If we cannot submit do not create the row
             if (!success) return
+            else isDataEmpty.current = false
           }
 
           setSelectionCell(null)
@@ -401,7 +612,9 @@ export const DataSheetGrid = React.memo(
           onChange,
           setActiveCell,
           setSelectionCell,
-          isDataEmpty,
+          activeCell,
+          data,
+          submitRowData,
         ]
       )
 
@@ -523,198 +736,6 @@ export const DataSheetGrid = React.memo(
           scrollTo(activeCell)
         }
       }, [activeCell, scrollTo])
-
-      const deleteRows = useCallback(
-        async (
-          rowMin: number,
-          rowMax: number = rowMin,
-          changeActiveCell: boolean = true
-        ) => {
-          if (lockRows) {
-            return
-          }
-
-          setEditing(false)
-
-          setSelectionCell(null)
-
-          let operation: OperationSubmit
-          if (newRowsTracker.current?.includes(rowMin)) {
-            operation = { type: 'DELETE_NEW', index: rowMin }
-          } else {
-            operation = { type: 'DELETE', index: rowMin }
-          }
-
-          // Get before onRowSubmit
-          const dataLength = dataRef.current.length
-
-          if (
-            await onRowSubmit(
-              [...dataRef.current],
-              [
-                ...dataRef.current.slice(0, rowMin),
-                ...dataRef.current.slice(rowMax + 1),
-              ],
-              rowMin,
-              operation
-            )
-          ) {
-            // Only change active cell if set to true or the current active cell row is bigger than
-            // the lenght of the rows
-            if (changeActiveCell || activeCell?.row === dataLength - 1) {
-              setActiveCell((a) => {
-                const row = Math.min(dataLength - 2 - rowMax + rowMin, rowMin)
-
-                if (row < 0) {
-                  return null
-                }
-                return a && { col: a.col, row }
-              })
-            }
-          } else {
-            // return to the cell that we tried to submit
-            setActiveCell((a) => {
-              const row = rowMin
-
-              if (row < 0) {
-                return null
-              }
-              return a && { col: a.col, row }
-            })
-          }
-        },
-        [lockRows, setActiveCell, setSelectionCell, onRowSubmit, activeCell]
-      )
-
-      const submitRowData = useCallback(
-        async (rowIndex: number, item: T, iniItem?: T) => {
-          const row = data.slice(rowIndex, rowIndex + 1)
-          const isEmpty = row.every((rowData, i) => {
-            if (isRowEmpty) {
-              return isRowEmpty(
-                rowData,
-                newRowsTracker.current?.includes(rowIndex + i)
-              )
-            } else {
-              return columns.every((column) =>
-                column.isCellEmpty({ rowData, rowIndex: i + rowIndex })
-              )
-            }
-          })
-
-          // check if the row has changed and is not empty
-          if (iniItem && !isEmpty && !deepEqual(rowDataInit.current, item)) {
-            // The row we we're editing has changed
-
-            let operation: OperationSubmit
-            if (newRowsTracker.current?.includes(rowIndex)) {
-              operation = { index: rowIndex, type: 'CREATE' }
-            } else {
-              operation = { index: rowIndex, type: 'UPDATE' }
-            }
-
-            const submitted = await onRowSubmit(
-              [
-                ...dataRef.current?.slice(0, rowIndex),
-                iniItem,
-                ...dataRef.current?.slice(rowIndex + 1),
-              ],
-              [
-                ...dataRef.current?.slice(0, rowIndex),
-                item,
-                ...dataRef.current?.slice(rowIndex + 1),
-              ],
-              rowIndex,
-              operation
-            )
-
-            if (submitted) {
-              // If not error on submitted remove row from the creating rows tracker
-              newRowsTracker.current = newRowsTracker.current?.filter(
-                (f) => f !== rowIndex
-              )
-              rowDataInit.current = undefined
-            } else {
-              // return to the cell that we tried to submit
-              setActiveCell((a) => {
-                const row = rowIndex
-
-                if (row < 0) {
-                  return null
-                }
-                return a && { col: a.col, row }
-              })
-            }
-
-            return submitted
-          } else {
-            // The row we we're editing was not changed
-            const isCreating = newRowsTracker.current?.includes(rowIndex)
-
-            // We check if the row we we're editing is new and empty
-            if (isCreating) {
-              // If we cannot create multiple new rows and we are on the last row we delete the previous row since
-              // is empty and we we're creating it
-              // if (!multipleNewRows && rowIndex === data.length - 1) {
-              if (!multipleNewRows) {
-                deleteRows(rowIndex, rowIndex, false)
-                // Remove the index from the tracker
-                newRowsTracker.current = newRowsTracker.current?.filter(
-                  (f) => f !== rowIndex
-                )
-              } else {
-                // If we can create multiple rows we submit the changes
-                const created = await onRowSubmit(
-                  [
-                    ...dataRef.current?.slice(0, rowIndex),
-                    item,
-                    ...dataRef.current?.slice(rowIndex + 1),
-                  ],
-                  [
-                    ...dataRef.current?.slice(0, rowIndex),
-                    item,
-                    ...dataRef.current?.slice(rowIndex + 1),
-                  ],
-                  rowIndex,
-                  { type: 'CREATE', index: rowIndex }
-                )
-
-                if (created) {
-                  // If not error on submitted remove row from the creating rows tracker
-                  newRowsTracker.current = newRowsTracker.current?.filter(
-                    (f) => f !== rowIndex
-                  )
-                  rowDataInit.current = undefined
-                } else {
-                  // return to the cell that we tried to submit
-                  setActiveCell((a) => {
-                    const row = rowIndex
-
-                    if (row < 0) {
-                      return null
-                    }
-                    return a && { col: a.col, row }
-                  })
-                }
-
-                return created
-              }
-            }
-
-            // If we don't do anything return true
-            return true
-          }
-        },
-        [
-          onRowSubmit,
-          columns,
-          data,
-          deleteRows,
-          isRowEmpty,
-          multipleNewRows,
-          setActiveCell,
-        ]
-      )
 
       const rowDataInit = useRef<{ data: T; rowIndex: number }>()
       const setRowData = useCallback(
@@ -1948,7 +1969,7 @@ export const DataSheetGrid = React.memo(
         duplicateRows,
         insertRowAfter,
         stopEditing,
-        isDataEmpty,
+        isDataEmpty: isDataEmpty.current,
         getContextMenuItems,
         rowClassName,
         onDoubleClickRow,
