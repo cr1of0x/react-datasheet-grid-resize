@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
+import { useRef } from 'react'
 import {
   checkboxColumn,
   Column,
@@ -9,7 +10,7 @@ import {
 } from 'react-datasheet-grid'
 import 'react-datasheet-grid/dist/style.css'
 import AutoSizer, { Size } from 'react-virtualized-auto-sizer'
-import { Operation, OperationSubmit } from '../../dist/types'
+import { DataSheetGridRef, Operation, OperationSubmit } from '../../dist/types'
 import './style.css'
 
 type Row = {
@@ -24,6 +25,9 @@ function App() {
     // { active: true, firstName: 'Elon', lastName: 'Musk' },
     // { active: false, firstName: 'Jeff', lastName: 'Bezos' },
   ])
+
+  const ref = useRef<DataSheetGridRef>(null)
+
   const [isGridLoading, setIsGridLoading] = useState(false)
 
   const [activeVisible, setActiveVisible] = useState(true)
@@ -72,20 +76,45 @@ function App() {
     {
       ...keyColumn<Row, 'firstName'>('firstName', textColumn),
       title: 'First name',
+      disabled: true,
     },
     {
       ...keyColumn<Row, 'lastName'>('lastName', textColumn),
       title: 'Last name',
       width: 2,
-      disabled: ({ rowData, rowIndex, isCreating }) => {
-        return false
-        // return false;
-      },
+      // required: true,
+      disableKeys: true,
     },
   ]
 
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms))
+
+  const onRowSubmit = useCallback(
+    async (
+      prevValue: Row[],
+      newValue: Row[],
+      rowIndex: number,
+      operation: OperationSubmit
+    ) => {
+      console.log('onRowSubmit: ', prevValue, newValue, operation)
+      // setIsGridLoading(true)
+      await sleep(3000)
+      // setData(newValue)
+
+      let rdata = newValue[rowIndex]
+      setData([
+        ...newValue?.slice(0, rowIndex),
+        // { ...rdata, lastName: 'just a test' },
+        { ...rdata },
+        ...newValue?.slice(rowIndex + 1),
+      ])
+
+      // setIsGridLoading(false)
+      return true
+    },
+    [setData]
+  )
 
   return (
     <div
@@ -122,6 +151,7 @@ function App() {
         </button>
       </div> */}
       <button onClick={() => setIsEditing((v) => !v)}>Toggle Edit</button>
+      <button onClick={() => ref.current?.submit()}>Submit</button>
       <div
         style={{
           display: 'flex',
@@ -132,6 +162,7 @@ function App() {
         <AutoSizer>
           {({ height, width }: Size) => (
             <DynamicDataSheetGrid
+              ref={ref}
               style={{
                 height: height,
                 width: width,
@@ -145,33 +176,13 @@ function App() {
                 console.log('onChange grid: ', operations, value)
                 setData(value)
               }}
-              onRowSubmit={async (
-                prevValue: Row[],
-                newValue: Row[],
-                rowIndex: number,
-                operation: OperationSubmit
-              ) => {
-                console.log('onRowSubmit: ', prevValue, newValue, operation)
-                // setIsGridLoading(true)
-                // await sleep(1000)
-                // setData(newValue)
-
-                let rdata = newValue[rowIndex]
-                setData([
-                  ...newValue?.slice(0, rowIndex),
-                  { ...rdata, lastName: 'just a test' },
-                  ...newValue?.slice(rowIndex + 1),
-                ])
-
-                // setIsGridLoading(false)
-                return true
-              }}
+              onRowSubmit={onRowSubmit}
               columns={columns}
               isEditing={isEditing}
               onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
               autoAddRow={true}
               height={height}
-              multipleNewRows={true}
+              multipleNewRows={false}
               footerComponent={() => (
                 <div>{isGridLoading ? 'true' : 'false'}</div>
               )}

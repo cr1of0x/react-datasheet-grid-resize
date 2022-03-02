@@ -88,6 +88,7 @@ export const useColumns = <T extends any>(
           component: column.component ?? defaultComponent,
           disableKeys: column.disableKeys ?? false,
           disabled: column.disabled ?? false,
+          required: column.required ?? false,
           keepFocus: column.keepFocus ?? false,
           deleteValue: column.deleteValue ?? identityRow,
           copyValue: column.copyValue ?? defaultCopyValue,

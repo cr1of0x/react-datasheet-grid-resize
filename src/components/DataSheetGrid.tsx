@@ -126,7 +126,12 @@ export const DataSheetGrid = React.memo(
         // If the datagrid lenght is 0 and no row was changed it means the data we received new data from outside
         // so we initialize the isDataEmpty
 
-        if (!rowDataInit.current) isDataEmpty.current = datagrid.length === 0
+        if (!rowDataInit.current) {
+          isDataEmpty.current =
+            datagrid.length === 0 ||
+            (datagrid.length === 1 &&
+              Object.keys(datagrid[0] as any).length === 0)
+        }
       }, [datagrid, rowDataInit])
 
       useEffect(() => {
@@ -341,7 +346,6 @@ export const DataSheetGrid = React.memo(
 
       const dataRef = useRef(data)
       dataRef.current = data
-      console.log('dataRef: ', dataRef.current)
 
       const isCellDisabled = useCallback(
         (cell: Cell): boolean => {
@@ -441,6 +445,32 @@ export const DataSheetGrid = React.memo(
           }
 
           const row = data.slice(rowIndex, rowIndex + 1)
+
+          const satisfiesRequiredCols = row.every((rowData, i) => {
+            return columns.every((column) => {
+              if (column.required) {
+                return !column.isCellEmpty({ rowData, rowIndex: i + rowIndex })
+              }
+              return true
+            })
+          })
+
+          // If there are empty cells on the row that are required we do not submit and return false
+          if (!satisfiesRequiredCols) {
+            forbidSubmitOnError.current = true
+
+            // return to the cell that we tried to submit
+            setActiveCell((a) => {
+              const row = rowIndex
+
+              if (row < 0) {
+                return null
+              }
+              return a && { col: a.col, row }
+            })
+            return false
+          }
+
           const isEmpty = row.every((rowData, i) => {
             if (isRowEmpty) {
               return isRowEmpty(
@@ -455,7 +485,7 @@ export const DataSheetGrid = React.memo(
           })
 
           // check if the row has changed and is not empty
-          if (iniItem && !isEmpty && !deepEqual(rowDataInit.current, item)) {
+          if (iniItem && !isEmpty && !deepEqual(iniItem, item)) {
             // The row we we're editing has changed
 
             let operation: OperationSubmit
@@ -507,10 +537,10 @@ export const DataSheetGrid = React.memo(
 
             return submitted
           } else {
-            // The row we we're editing was not changed
+            // The row we we're editing was not changed, we check if the row is a new one
             const isCreating = newRowsTracker.current?.includes(rowIndex)
 
-            // We check if the row we we're editing is new and empty
+            // We check if the row we we're editing is new
             if (isCreating) {
               // If we cannot create multiple new rows and we are on the last row we delete the previous row since
               // is empty and we we're creating it
@@ -540,6 +570,7 @@ export const DataSheetGrid = React.memo(
 
                 if (created) {
                   // If we submitted succesfully data is no longer empty
+
                   isDataEmpty.current = false
                   // If not error on submitted remove row from the creating rows tracker
                   newRowsTracker.current = newRowsTracker.current?.filter(
@@ -562,6 +593,9 @@ export const DataSheetGrid = React.memo(
 
                 return created
               }
+            } else if (isDataEmpty.current) {
+              // If we are adding the first row and the row is empty we return false
+              return false
             }
 
             // If we don't do anything return true
@@ -588,7 +622,6 @@ export const DataSheetGrid = React.memo(
 
           // submit row data before creating a new row
           if (activeCell) {
-            console.log('insertRowAfter submit: ', dataRef.current)
             const success = await submitRowData(
               activeCell.row,
               data.slice(activeCell.row, activeCell.row + 1)[0],
@@ -602,8 +635,6 @@ export const DataSheetGrid = React.memo(
 
           setSelectionCell(null)
           setEditing(false)
-
-          console.log('insertRowAfter onChange: ', dataRef.current)
 
           onChange(
             [
@@ -1734,7 +1765,7 @@ export const DataSheetGrid = React.memo(
             !event.shiftKey
           ) {
             setSelectionCell(null)
-            if (editing) {
+            if (editing || isCellDisabled(activeCell)) {
               if (!columns[activeCell.col + 1].disableKeys) {
                 stopEditing({ nextRow: false })
               }
@@ -2039,6 +2070,63 @@ export const DataSheetGrid = React.memo(
           setEditing(false)
           setSelectionMode({ columns: false, active: false, rows: false })
           setSelectionCell(null)
+        },
+        // Submits the current editing row
+        submit: async () => {
+          // Only submit if the current row has been modified
+          if (activeCell) {
+            forbidSubmitOnError.current = false
+
+            const row = data.slice(activeCell.row, activeCell.row + 1)
+            const satisfiesRequiredCols = row.every((rowData, i) => {
+              return columns.every((column) => {
+                if (column.required) {
+                  return !column.isCellEmpty({
+                    rowData,
+                    rowIndex: i + activeCell.row,
+                  })
+                }
+                return true
+              })
+            })
+
+            const cReqCols = columns.filter((c) => c.required).length
+
+            const success = await submitRowData(
+              activeCell.row,
+              row[0],
+              rowDataInit.current?.data
+            )
+
+            // Check why it can give failure
+            if (!success) {
+              if (
+                isDataEmpty.current &&
+                (!satisfiesRequiredCols || cReqCols === 0)
+              ) {
+                // If is the first row of the grid and the required rows are not set or there aren't required rows
+                // set the value of the row to its initial value and return true
+                onChange(
+                  [
+                    // ...dataRef.current?.slice(0, activeCell.row),
+                    // rowDataInit.current?.data ?? createRow(),
+                    // ...dataRef.current?.slice(activeCell.row + 1),
+                  ],
+                  [
+                    {
+                      type: 'UPDATE',
+                      fromRowIndex: activeCell.row,
+                      toRowIndex: activeCell.row + 1,
+                    },
+                  ]
+                )
+                return true
+              }
+            }
+
+            return success
+          }
+          return true
         },
       }))
 

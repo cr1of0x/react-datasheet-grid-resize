@@ -40,6 +40,7 @@ export type Column<T, C, PasteValue> = {
   component: CellComponent<T, C>
   columnData?: C
   disableKeys: boolean
+  required: boolean
   disabled:
     | boolean
     | ((opt: { rowData: T; rowIndex: number; isCreating: boolean }) => boolean)
@@ -237,4 +238,5 @@ export type DataSheetGridRef = {
   selection: SelectionWithId | null
   setActiveCell: (activeCell: CellWithIdInput | null) => void
   setSelection: (selection: SelectionWithIdInput | null) => void
+  submit: () => Promise<boolean>
 }
