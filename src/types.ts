@@ -203,7 +203,6 @@ export type DataSheetGridProps<T> = {
   createRow?: () => T
   duplicateRow?: (opts: { rowData: T; rowIndex: number }) => T
   autoAddRow?: boolean
-  multipleNewRows?: boolean
   lockRows?: boolean
   showAddRowsComponent?: boolean
   disableContextMenu?: boolean

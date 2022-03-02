@@ -84,7 +84,6 @@ export const DataSheetGrid = React.memo(
         createRow = DEFAULT_CREATE_ROW as () => T,
         autoAddRow = false,
         lockRows = false,
-        multipleNewRows = false,
         showAddRowsComponent = false,
         disableExpandSelection = true,
         isLoading = false,
@@ -542,10 +541,8 @@ export const DataSheetGrid = React.memo(
 
             // We check if the row we we're editing is new
             if (isCreating) {
-              // If we cannot create multiple new rows and we are on the last row we delete the previous row since
-              // is empty and we we're creating it
-              // if (!multipleNewRows && rowIndex === data.length - 1) {
-              if (!multipleNewRows) {
+              //If we are creating the row and if not all the required cols are set or the row is empty we delete the row
+              if (!satisfiesRequiredCols || isEmpty) {
                 deleteRows(rowIndex, rowIndex, false)
                 // Remove the index from the tracker
                 newRowsTracker.current = newRowsTracker.current?.filter(
@@ -594,6 +591,7 @@ export const DataSheetGrid = React.memo(
                 return created
               }
             } else if (isDataEmpty.current) {
+              console.log("DIDN'T SUBMIT DATA IS EMPTY")
               // If we are adding the first row and the row is empty we return false
               return false
             }
@@ -602,15 +600,7 @@ export const DataSheetGrid = React.memo(
             return true
           }
         },
-        [
-          onRowSubmit,
-          columns,
-          data,
-          deleteRows,
-          isRowEmpty,
-          multipleNewRows,
-          setActiveCell,
-        ]
+        [onRowSubmit, columns, data, deleteRows, isRowEmpty, setActiveCell]
       )
 
       const insertRowAfter = useCallback(
@@ -1717,8 +1707,7 @@ export const DataSheetGrid = React.memo(
                   isEditing &&
                   ['ArrowDown'].includes(event.key) &&
                   activeCell.row == data.length - 1 &&
-                  (!newRowsTracker.current?.includes(activeCell.row) ||
-                    multipleNewRows)
+                  !newRowsTracker.current?.includes(activeCell.row)
                 ) {
                   insertRowAfter(selection?.max.row || activeCell.row)
                 }
@@ -1790,18 +1779,20 @@ export const DataSheetGrid = React.memo(
           ) {
             // Only insert row when editing and when there is no new rows already created
             insertRowAfter(selection?.max.row || activeCell.row)
-          } else if (
-            event.key === 'd' &&
-            (event.ctrlKey || event.metaKey) &&
-            !event.altKey &&
-            !event.shiftKey
-          ) {
-            duplicateRows(
-              selection?.min.row || activeCell.row,
-              selection?.max.row
-            )
-            event.preventDefault()
-          } else if (
+          }
+          // else if (
+          //   event.key === 'd' &&
+          //   (event.ctrlKey || event.metaKey) &&
+          //   !event.altKey &&
+          //   !event.shiftKey
+          // ) {
+          //   duplicateRows(
+          //     selection?.min.row || activeCell.row,
+          //     selection?.max.row
+          //   )
+          //   event.preventDefault()
+          // }
+          else if (
             event.key.match(/^[a-zA-Z0-9 ,.+-]$/) &&
             !event.ctrlKey &&
             !event.metaKey &&
@@ -1851,13 +1842,13 @@ export const DataSheetGrid = React.memo(
           columns,
           data,
           // deleteSelection,
-          duplicateRows,
+          // duplicateRows,
           editing,
           insertRowAfter,
           isCellDisabled,
           scrollTo,
           selection?.max.row,
-          selection?.min.row,
+          // selection?.min.row,
           setActiveCell,
           setSelectionCell,
           stopEditing,
@@ -1865,7 +1856,6 @@ export const DataSheetGrid = React.memo(
           isEditing,
           deleteRows,
           isRowEmpty,
-          multipleNewRows,
         ]
       )
       useDocumentEventListener('keydown', onKeyDown)

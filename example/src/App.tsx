@@ -76,7 +76,7 @@ function App() {
     {
       ...keyColumn<Row, 'firstName'>('firstName', textColumn),
       title: 'First name',
-      disabled: true,
+      disabled: false,
     },
     {
       ...keyColumn<Row, 'lastName'>('lastName', textColumn),
@@ -182,7 +182,6 @@ function App() {
               onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
               autoAddRow={true}
               height={height}
-              multipleNewRows={false}
               footerComponent={() => (
                 <div>{isGridLoading ? 'true' : 'false'}</div>
               )}
