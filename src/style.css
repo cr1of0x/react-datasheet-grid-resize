@@ -538,7 +538,8 @@
 }
 
 .dsg-context-menu {
-  position: fixed;
+  position: absolute;
+  /* position: fixed; */
   background: white;
   z-index: 10000;
   border-radius: 4px;

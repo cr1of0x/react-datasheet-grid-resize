@@ -125,17 +125,22 @@ function App() {
   )
 
   return (
-    <div
-      style={{
-        maxWidth: '900px',
-        background: '#f3f3f3',
-        height: '300px',
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-      }}
-    >
-      {/* <div style={{ display: 'flex', flexDirection: 'row' }}>
+    <div style={{ display: 'flex' }}>
+      <div
+        style={{ height: '100%', width: '44px', backgroundColor: 'red' }}
+      ></div>
+      <div
+        style={{
+          left: '44px',
+          maxWidth: '900px',
+          background: '#f3f3f3',
+          height: '300px',
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+        }}
+      >
+        {/* <div style={{ display: 'flex', flexDirection: 'row' }}>
         <button
           onClick={() => {
             setActiveVisible((v) => !v)
@@ -158,45 +163,46 @@ function App() {
           Toggle last name
         </button>
       </div> */}
-      <button onClick={() => setIsEditing((v) => !v)}>Toggle Edit</button>
-      <button onClick={() => ref.current?.submit()}>Submit</button>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          flexGrow: 1,
-        }}
-      >
-        <AutoSizer>
-          {({ height, width }: Size) => (
-            <DynamicDataSheetGrid
-              ref={ref}
-              style={{
-                height: height,
-                width: width,
-              }}
-              isRowEmpty={(rowData: any, isCreating: boolean) => {
-                return !rowData.firstName
-              }}
-              isLoading={isGridLoading}
-              value={data}
-              onChange={(value: any[], operations: Operation[]) => {
-                console.log('onChange grid: ', operations, value)
-                setData(value)
-              }}
-              onRowSubmit={onRowSubmit}
-              columns={columns}
-              isEditing={isEditing}
-              onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
-              autoAddRow={true}
-              height={height}
-              footerComponent={() => (
-                <div>{isGridLoading ? 'true' : 'false'}</div>
-              )}
-              // width={width}
-            />
-          )}
-        </AutoSizer>
+        <button onClick={() => setIsEditing((v) => !v)}>Toggle Edit</button>
+        <button onClick={() => ref.current?.submit()}>Submit</button>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: 1,
+          }}
+        >
+          <AutoSizer>
+            {({ height, width }: Size) => (
+              <DynamicDataSheetGrid
+                ref={ref}
+                style={{
+                  height: height,
+                  width: width,
+                }}
+                isRowEmpty={(rowData: any, isCreating: boolean) => {
+                  return !rowData.firstName
+                }}
+                isLoading={isGridLoading}
+                value={data}
+                onChange={(value: any[], operations: Operation[]) => {
+                  console.log('onChange grid: ', operations, value)
+                  setData(value)
+                }}
+                onRowSubmit={onRowSubmit}
+                columns={columns}
+                isEditing={isEditing}
+                onDoubleClickRow={(e) => console.log('onRowDoubleClick: ', e)}
+                autoAddRow={true}
+                height={height}
+                footerComponent={() => (
+                  <div>{isGridLoading ? 'true' : 'false'}</div>
+                )}
+                // width={width}
+              />
+            )}
+          </AutoSizer>
+        </div>
       </div>
     </div>
   )

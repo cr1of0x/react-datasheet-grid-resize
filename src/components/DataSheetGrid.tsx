@@ -1261,7 +1261,12 @@ export const DataSheetGrid = React.memo(
             cursorIndex.row <= selection.max.row
 
           if (rightClick && !disableContextMenu) {
-            setContextMenu({ x: event.clientX, y: event.clientY })
+            if (contRef.current) {
+              const rect = contRef.current.getBoundingClientRect()
+              const x = event.clientX - rect.left
+              const y = event.clientY - rect.top
+              setContextMenu({ x: x, y: y })
+            }
           }
 
           if (
@@ -2177,9 +2182,10 @@ export const DataSheetGrid = React.memo(
       ])
 
       const footerRef = useRef<HTMLDivElement>(null)
+      const contRef = useRef<HTMLDivElement>(null)
       console.log('render grid')
       return (
-        <div className={className} style={style}>
+        <div ref={contRef} className={className} style={style}>
           <div
             ref={beforeTabIndexRef}
             tabIndex={rawColumns.length && data.length ? 0 : undefined}
