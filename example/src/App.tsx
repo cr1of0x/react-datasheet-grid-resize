@@ -5,6 +5,7 @@ import {
   Column,
   createTextColumn,
   DynamicDataSheetGrid,
+  intColumn,
   keyColumn,
   textColumn,
 } from 'react-datasheet-grid'
@@ -17,6 +18,8 @@ type Row = {
   active: boolean
   firstName: string | null
   lastName: string | null
+  age: number
+  comptador: number
 }
 
 function App() {
@@ -66,7 +69,7 @@ function App() {
   //   return cols
   // }, [activeVisible, firstNameVisible, lastNameVisible])
 
-  const columns: Column<Row>[] = [
+  const columns: Column<any>[] = [
     {
       ...keyColumn<Row, 'active'>('active', checkboxColumn),
       title: 'Active',
@@ -85,6 +88,11 @@ function App() {
       // required: true,
       disableKeys: true,
     },
+    {
+      ...keyColumn('age', intColumn),
+      title: 'Age',
+      width: 2,
+    },
   ]
 
   const sleep = (ms: number) =>
@@ -99,14 +107,14 @@ function App() {
     ) => {
       console.log('onRowSubmit: ', prevValue, newValue, operation)
       // setIsGridLoading(true)
-      await sleep(3000)
+      await sleep(1000)
       // setData(newValue)
 
       let rdata = newValue[rowIndex]
       setData([
         ...newValue?.slice(0, rowIndex),
-        // { ...rdata, lastName: 'just a test' },
-        { ...rdata },
+        { ...rdata, comptador: 3 },
+        // { ...rdata },
         ...newValue?.slice(rowIndex + 1),
       ])
 
