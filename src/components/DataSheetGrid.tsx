@@ -1577,11 +1577,28 @@ export const DataSheetGrid = React.memo(
       )
       useDocumentEventListener('mousemove', onMouseMove)
 
-      // const onWheel = useCallback((event: WheelEvent) => {
-      //   console.log('onWheel: ', event)
-      //   console.log('onWheel: ', (event as any).wheelDelta)
-      // }, [])
-      // useDocumentEventListener('wheel', onWheel)
+      const onWheel = useCallback((event: WheelEvent) => {
+        if (activeCell) {
+          if ((event as any).wheelDelta > 100) {
+            setActiveCell((a) => {
+              if (!a) return a
+
+              const row = a.row === 0 ? a.row : a.row - 1
+
+              return a && { col: a.col, row }
+            })
+          } else if ((event as any).wheelDelta < -100) {
+            setActiveCell((a) => {
+              if (!a) return a
+
+              const row = Math.min(dataRef.current.length - 1, a.row + 1)
+
+              return a && { col: a.col, row }
+            })
+          }
+        }
+      }, [])
+      useDocumentEventListener('wheel', onWheel)
 
       const onKeyDown = useCallback(
         (event: KeyboardEvent) => {
