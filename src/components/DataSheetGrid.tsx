@@ -48,6 +48,7 @@ import {
   getSelectionWithId,
 } from '../utils/typeCheck'
 import { getAllTabbableElements } from '../utils/tab'
+import { CreateContextItems } from './CreateContextItems'
 
 const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any, any>[] = []
@@ -89,6 +90,7 @@ export const DataSheetGrid = React.memo(
         isLoading = false,
         duplicateRow = DEFAULT_DUPLICATE_ROW,
         contextMenuComponent: ContextMenuComponent = ContextMenu,
+        createContextMenuItems: CreateContextMenuItems = CreateContextItems,
         disableContextMenu: disableContextMenuRaw = false,
         onFocus = DEFAULT_EMPTY_CALLBACK,
         onBlur = DEFAULT_EMPTY_CALLBACK,
@@ -1178,6 +1180,7 @@ export const DataSheetGrid = React.memo(
       )
       useDocumentEventListener('paste', onPaste)
 
+      const isLeftMouseButtonPressed = useRef<boolean>(false)
       const onMouseDown = useCallback(
         (event: MouseEvent) => {
           if (
@@ -1188,6 +1191,7 @@ export const DataSheetGrid = React.memo(
           }
 
           const rightClick = event.button === 2
+          const leftClick = event.button === 0
           const clickInside =
             innerRef.current?.contains(event.target as Node) || false
 
@@ -1203,6 +1207,9 @@ export const DataSheetGrid = React.memo(
           ) {
             return
           }
+
+          // Detect if we pressed the left mouse button
+          isLeftMouseButtonPressed.current = leftClick
 
           if (
             event.target instanceof HTMLElement &&
@@ -1404,124 +1411,132 @@ export const DataSheetGrid = React.memo(
       )
       useDocumentEventListener('mousedown', onMouseDown)
 
-      const onMouseUp = useCallback(() => {
-        if (expandingSelectionFromRowIndex !== null) {
-          if (expandSelectionRowsCount > 0 && activeCell) {
-            let copyData: Array<Array<string>> = []
+      const onMouseUp = useCallback(
+        (event: MouseEvent) => {
+          // Detect if we stopped pressing the left mouse button
+          if (event.button === 0) isLeftMouseButtonPressed.current = false
 
-            const min: Cell = selection?.min || activeCell
-            const max: Cell = selection?.max || activeCell
+          if (expandingSelectionFromRowIndex !== null) {
+            if (expandSelectionRowsCount > 0 && activeCell) {
+              let copyData: Array<Array<string>> = []
 
-            for (let row = min.row; row <= max.row; ++row) {
-              copyData.push([])
+              const min: Cell = selection?.min || activeCell
+              const max: Cell = selection?.max || activeCell
 
-              for (let col = min.col; col <= max.col; ++col) {
-                const { copyValue = () => null } = columns[col + 1]
-                copyData[row - min.row].push(
-                  String(copyValue({ rowData: data[row], rowIndex: row }) ?? '')
-                )
-              }
-            }
+              for (let row = min.row; row <= max.row; ++row) {
+                copyData.push([])
 
-            Promise.all(
-              copyData[0].map((_, columnIndex) => {
-                const prePasteValues =
-                  columns[min.col + columnIndex + 1]?.prePasteValues
-
-                const values = copyData.map((row) => row[columnIndex])
-                return prePasteValues?.(values) ?? values
-              })
-            ).then((results) => {
-              copyData = copyData.map((_, rowIndex) =>
-                results.map((column) => column[rowIndex])
-              )
-
-              const newData = [...data]
-
-              for (
-                let columnIndex = 0;
-                columnIndex < copyData[0].length;
-                columnIndex++
-              ) {
-                const pasteValue =
-                  columns[min.col + columnIndex + 1]?.pasteValue
-
-                if (pasteValue) {
-                  for (
-                    let rowIndex = max.row + 1;
-                    rowIndex <= max.row + expandSelectionRowsCount;
-                    rowIndex++
-                  ) {
-                    if (
-                      !isCellDisabled({
-                        col: columnIndex + min.col,
-                        row: rowIndex,
-                      })
-                    ) {
-                      newData[rowIndex] = pasteValue({
-                        rowData: newData[rowIndex],
-                        value:
-                          copyData[(rowIndex - max.row - 1) % copyData.length][
-                            columnIndex
-                          ],
-                        rowIndex,
-                      })
-                    }
-                  }
+                for (let col = min.col; col <= max.col; ++col) {
+                  const { copyValue = () => null } = columns[col + 1]
+                  copyData[row - min.row].push(
+                    String(
+                      copyValue({ rowData: data[row], rowIndex: row }) ?? ''
+                    )
+                  )
                 }
               }
 
-              onChange(newData, [
-                {
-                  type: 'UPDATE',
-                  fromRowIndex: max.row + 1,
-                  toRowIndex: max.row + 1 + expandSelectionRowsCount,
-                },
-              ])
-            })
+              Promise.all(
+                copyData[0].map((_, columnIndex) => {
+                  const prePasteValues =
+                    columns[min.col + columnIndex + 1]?.prePasteValues
 
-            setExpandSelectionRowsCount(0)
-            setActiveCell({
-              col: Math.min(
-                activeCell?.col ?? Infinity,
-                selection?.min.col ?? Infinity
-              ),
-              row: Math.min(
-                activeCell?.row ?? Infinity,
-                selection?.min.row ?? Infinity
-              ),
-              doNotScrollX: true,
-              doNotScrollY: true,
-            })
-            setSelectionCell({
-              col: Math.max(activeCell?.col ?? 0, selection?.max.col ?? 0),
-              row:
-                Math.max(activeCell?.row ?? 0, selection?.max.row ?? 0) +
-                expandSelectionRowsCount,
-            })
+                  const values = copyData.map((row) => row[columnIndex])
+                  return prePasteValues?.(values) ?? values
+                })
+              ).then((results) => {
+                copyData = copyData.map((_, rowIndex) =>
+                  results.map((column) => column[rowIndex])
+                )
+
+                const newData = [...data]
+
+                for (
+                  let columnIndex = 0;
+                  columnIndex < copyData[0].length;
+                  columnIndex++
+                ) {
+                  const pasteValue =
+                    columns[min.col + columnIndex + 1]?.pasteValue
+
+                  if (pasteValue) {
+                    for (
+                      let rowIndex = max.row + 1;
+                      rowIndex <= max.row + expandSelectionRowsCount;
+                      rowIndex++
+                    ) {
+                      if (
+                        !isCellDisabled({
+                          col: columnIndex + min.col,
+                          row: rowIndex,
+                        })
+                      ) {
+                        newData[rowIndex] = pasteValue({
+                          rowData: newData[rowIndex],
+                          value:
+                            copyData[
+                              (rowIndex - max.row - 1) % copyData.length
+                            ][columnIndex],
+                          rowIndex,
+                        })
+                      }
+                    }
+                  }
+                }
+
+                onChange(newData, [
+                  {
+                    type: 'UPDATE',
+                    fromRowIndex: max.row + 1,
+                    toRowIndex: max.row + 1 + expandSelectionRowsCount,
+                  },
+                ])
+              })
+
+              setExpandSelectionRowsCount(0)
+              setActiveCell({
+                col: Math.min(
+                  activeCell?.col ?? Infinity,
+                  selection?.min.col ?? Infinity
+                ),
+                row: Math.min(
+                  activeCell?.row ?? Infinity,
+                  selection?.min.row ?? Infinity
+                ),
+                doNotScrollX: true,
+                doNotScrollY: true,
+              })
+              setSelectionCell({
+                col: Math.max(activeCell?.col ?? 0, selection?.max.col ?? 0),
+                row:
+                  Math.max(activeCell?.row ?? 0, selection?.max.row ?? 0) +
+                  expandSelectionRowsCount,
+              })
+            }
+            setExpandingSelectionFromRowIndex(null)
           }
-          setExpandingSelectionFromRowIndex(null)
-        }
 
-        setSelectionMode({
-          columns: false,
-          rows: false,
-          active: false,
-        })
-      }, [
-        expandingSelectionFromRowIndex,
-        setSelectionMode,
-        expandSelectionRowsCount,
-        activeCell,
-        selection?.min,
-        selection?.max,
-        data,
-        onChange,
-        setActiveCell,
-        setSelectionCell,
-        columns,
-        isCellDisabled,
-      ])
+          setSelectionMode({
+            columns: false,
+            rows: false,
+            active: false,
+          })
+        },
+        [
+          expandingSelectionFromRowIndex,
+          setSelectionMode,
+          expandSelectionRowsCount,
+          activeCell,
+          selection?.min,
+          selection?.max,
+          data,
+          onChange,
+          setActiveCell,
+          setSelectionCell,
+          columns,
+          isCellDisabled,
+        ]
+      )
       useDocumentEventListener('mouseup', onMouseUp)
 
       const onMouseMove = useCallback(
@@ -1559,7 +1574,22 @@ export const DataSheetGrid = React.memo(
                 doNotScrollY: !selectionMode.rows,
               }
             )
+
             setEditing(false)
+          }
+
+          // Change the active cell when dragging the mouse and when the grid is not loading
+          if (isLeftMouseButtonPressed.current && !isLoading && activeCell) {
+            const cursorIndex = getCursorIndex(event)
+            if (
+              cursorIndex &&
+              (cursorIndex.col != activeCell.col ||
+                cursorIndex.row != activeCell.row) &&
+              cursorIndex.col >= 0 &&
+              cursorIndex.row >= 0
+            ) {
+              setActiveCell({ col: cursorIndex?.col, row: cursorIndex?.row })
+            }
           }
         },
         [
@@ -1573,31 +1603,37 @@ export const DataSheetGrid = React.memo(
           setSelectionCell,
           data.length,
           expandingSelectionFromRowIndex,
+          activeCell,
+          isLoading,
+          setActiveCell,
         ]
       )
       useDocumentEventListener('mousemove', onMouseMove)
 
-      const onWheel = useCallback((event: WheelEvent) => {
-        if (activeCell) {
-          if ((event as any).wheelDelta > 100) {
-            setActiveCell((a) => {
-              if (!a) return a
+      const onWheel = useCallback(
+        (event: WheelEvent) => {
+          if (activeCell && isLoadingRef.current === false) {
+            if ((event as any).wheelDelta > 100) {
+              setActiveCell((a) => {
+                if (!a) return a
 
-              const row = a.row === 0 ? a.row : a.row - 1
+                const row = a.row === 0 ? a.row : a.row - 1
 
-              return a && { col: a.col, row }
-            })
-          } else if ((event as any).wheelDelta < -100) {
-            setActiveCell((a) => {
-              if (!a) return a
+                return a && { col: a.col, row }
+              })
+            } else if ((event as any).wheelDelta < -100) {
+              setActiveCell((a) => {
+                if (!a) return a
 
-              const row = Math.min(dataRef.current.length - 1, a.row + 1)
+                const row = Math.min(dataRef.current.length - 1, a.row + 1)
 
-              return a && { col: a.col, row }
-            })
+                return a && { col: a.col, row }
+              })
+            }
           }
-        }
-      }, [])
+        },
+        [activeCell, setActiveCell]
+      )
       useDocumentEventListener('wheel', onWheel)
 
       const onKeyDown = useCallback(
@@ -1907,84 +1943,99 @@ export const DataSheetGrid = React.memo(
       useDocumentEventListener('contextmenu', onContextMenu)
 
       useEffect(() => {
-        const items: ContextMenuItem[] = []
+        CreateContextMenuItems(
+          setContextMenuItems,
+          () => setContextMenu(null),
+          deleteRows,
+          duplicateRows,
+          insertRowAfter,
+          data,
+          isEditing,
+          activeCell?.row,
+          selection?.min.row,
+          selection?.max.row
+        )
 
-        if (selection?.max.row !== undefined) {
-          items.push({
-            type: 'INSERT_ROW_BELLOW',
-            action: () => {
-              setContextMenu(null)
-              insertRowAfter(selection.max.row)
-            },
-          })
-        } else if (activeCell?.row !== undefined) {
-          items.push({
-            type: 'INSERT_ROW_BELLOW',
-            action: () => {
-              setContextMenu(null)
-              insertRowAfter(activeCell.row)
-            },
-          })
-        }
+        // const items: ContextMenuItem[] = []
 
-        if (
-          selection?.min.row !== undefined &&
-          selection.min.row !== selection.max.row
-        ) {
-          items.push({
-            type: 'DUPLICATE_ROWS',
-            fromRow: selection.min.row + 1,
-            toRow: selection.max.row + 1,
-            action: () => {
-              setContextMenu(null)
-              duplicateRows(selection.min.row, selection.max.row)
-            },
-          })
-        } else if (activeCell?.row !== undefined) {
-          items.push({
-            type: 'DUPLICATE_ROW',
-            action: () => {
-              setContextMenu(null)
-              duplicateRows(activeCell.row)
-            },
-          })
-        }
+        // if (selection?.max.row !== undefined) {
+        //   items.push({
+        //     type: 'INSERT_ROW_BELLOW',
+        //     action: () => {
+        //       setContextMenu(null)
+        //       insertRowAfter(selection.max.row)
+        //     },
+        //   })
+        // } else if (activeCell?.row !== undefined) {
+        //   items.push({
+        //     type: 'INSERT_ROW_BELLOW',
+        //     action: () => {
+        //       setContextMenu(null)
+        //       insertRowAfter(activeCell.row)
+        //     },
+        //   })
+        // }
 
-        if (
-          selection?.min.row !== undefined &&
-          selection.min.row !== selection.max.row
-        ) {
-          items.push({
-            type: 'DELETE_ROWS',
-            fromRow: selection.min.row + 1,
-            toRow: selection.max.row + 1,
-            action: () => {
-              setContextMenu(null)
-              deleteRows(selection.min.row, selection.max.row)
-            },
-          })
-        } else if (activeCell?.row !== undefined) {
-          items.push({
-            type: 'DELETE_ROW',
-            action: () => {
-              setContextMenu(null)
-              deleteRows(activeCell.row)
-            },
-          })
-        }
+        // if (
+        //   selection?.min.row !== undefined &&
+        //   selection?.min.row !== selection.max.row
+        // ) {
+        //   items.push({
+        //     type: 'DUPLICATE_ROWS',
+        //     fromRow: selection.min.row + 1,
+        //     toRow: selection.max.row + 1,
+        //     action: () => {
+        //       setContextMenu(null)
+        //       duplicateRows(selection.min.row, selection.max.row)
+        //     },
+        //   })
+        // } else if (activeCell?.row !== undefined) {
+        //   items.push({
+        //     type: 'DUPLICATE_ROW',
+        //     action: () => {
+        //       setContextMenu(null)
+        //       duplicateRows(activeCell.row)
+        //     },
+        //   })
+        // }
 
-        setContextMenuItems(items)
-        if (!items.length) {
-          setContextMenu(null)
-        }
+        // if (
+        //   selection?.min.row !== undefined &&
+        //   selection.min.row !== selection.max.row
+        // ) {
+        //   items.push({
+        //     type: 'DELETE_ROWS',
+        //     fromRow: selection.min.row + 1,
+        //     toRow: selection.max.row + 1,
+        //     action: () => {
+        //       setContextMenu(null)
+        //       deleteRows(selection.min.row, selection.max.row)
+        //     },
+        //   })
+        // } else if (activeCell?.row !== undefined) {
+        //   items.push({
+        //     type: 'DELETE_ROW',
+        //     action: () => {
+        //       setContextMenu(null)
+        //       deleteRows(activeCell.row)
+        //     },
+        //   })
+        // }
+
+        // setContextMenuItems(items)
+        // if (!items.length) {
+        //   setContextMenu(null)
+        // }
       }, [
         activeCell?.row,
         deleteRows,
         duplicateRows,
         insertRowAfter,
-        isDataEmpty,
         selection?.min.row,
         selection?.max.row,
+        CreateContextMenuItems,
+        data,
+        isEditing,
       ])
 
       const headerContext = useMemoObject<HeaderContextType<T>>({
@@ -2260,6 +2311,7 @@ export const DataSheetGrid = React.memo(
               clientY={contextMenu.y}
               items={contextMenuItems}
               close={() => setContextMenu(null)}
+              isGridEditing={isEditing}
             />
           )}
         </div>

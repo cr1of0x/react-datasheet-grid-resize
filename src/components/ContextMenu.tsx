@@ -3,7 +3,7 @@ import { useCallback, useRef } from 'react'
 import { useDocumentEventListener } from '../hooks/useDocumentEventListener'
 import { ContextMenuItem, ContextMenuComponentProps } from '../types'
 
-const renderItem = (item: ContextMenuItem) => {
+const renderItem = (item: ContextMenuItem, isGridEditing: boolean) => {
   if (item.type === 'DELETE_ROW') {
     return 'Delete row'
   }
@@ -40,6 +40,7 @@ export const ContextMenu = ({
   clientY,
   items,
   close,
+  isGridEditing,
 }: ContextMenuComponentProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -67,7 +68,7 @@ export const ContextMenu = ({
           onClick={item.action}
           className="dsg-context-menu-item"
         >
-          {renderItem(item)}
+          {renderItem(item, isGridEditing)}
         </div>
       ))}
     </div>

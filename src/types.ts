@@ -148,22 +148,28 @@ export type AddRowsComponentProps = {
 }
 
 export type ContextMenuItem =
-  | {
-      type: 'INSERT_ROW_BELLOW' | 'DELETE_ROW' | 'DUPLICATE_ROW'
-      action: () => void
-    }
-  | {
-      type: 'DELETE_ROWS' | 'DUPLICATE_ROWS'
-      action: () => void
-      fromRow: number
-      toRow: number
-    }
+  // | {
+  //     type:
+  //       | 'INSERT_ROW_BELLOW'
+  //       | 'DELETE_ROW'
+  //       | 'DUPLICATE_ROW'
+  //       | 'EXPORT_EXCEL'
+  //     action: () => void
+  //   }
+  // | {
+  {
+    type: string //'DELETE_ROWS' | 'DUPLICATE_ROWS'
+    action: () => void
+    fromRow?: number
+    toRow?: number
+  }
 
 export type ContextMenuComponentProps = {
   clientX: number
   clientY: number
   items: ContextMenuItem[]
   close: () => void
+  isGridEditing: boolean
 }
 
 export type Operation = {
@@ -209,6 +215,26 @@ export type DataSheetGridProps<T> = {
   disableExpandSelection?: boolean
   isLoading?: boolean
   contextMenuComponent?: (props: ContextMenuComponentProps) => JSX.Element
+  createContextMenuItems?: (
+    setContextMenuItems: (items: ContextMenuItem[]) => void,
+    closeContextMenu: () => void,
+    deleteRows: (
+      rowMin: number,
+      rowMax?: number,
+      changeActiveCell?: boolean
+    ) => Promise<void>,
+    duplicateRows: (rowMin: number, rowMax?: number) => void,
+    insertRowAfter: (
+      row: number,
+      count?: any,
+      firstActiveCol?: boolean
+    ) => Promise<void>,
+    data: T[],
+    isGridEditing: boolean,
+    row?: number,
+    selectionMinRow?: number,
+    selectionMaxRow?: number
+  ) => void
   onFocus?: (opts: { cell: CellWithId }) => void
   onBlur?: (opts: { cell: CellWithId }) => void
   onActiveCellChange?: (opts: { cell: CellWithId | null }) => void
