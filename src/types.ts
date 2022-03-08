@@ -230,6 +230,7 @@ export type DataSheetGridProps<T> = {
       firstActiveCol?: boolean
     ) => Promise<void>,
     copyAll: () => void,
+    searchText: (text: string) => void,
     data: T[],
     isGridEditing: boolean,
     row?: number,
@@ -265,4 +266,5 @@ export type DataSheetGridRef = {
   setActiveCell: (activeCell: CellWithIdInput | null) => void
   setSelection: (selection: SelectionWithIdInput | null) => void
   submit: () => Promise<boolean>
+  search: (search: string) => boolean
 }

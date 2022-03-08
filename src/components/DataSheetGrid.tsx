@@ -1964,6 +1964,91 @@ export const DataSheetGrid = React.memo(
       )
       useDocumentEventListener('keydown', onKeyDown)
 
+      const find = useCallback(
+        (
+          search: string,
+          startingRow: number,
+          startingCol: number
+        ): { row: number; col: number } => {
+          for (let r = startingRow; r <= data.length; ++r) {
+            for (
+              let c = r === startingRow ? startingCol : 0;
+              c <= columns.length - 2;
+              ++c
+            ) {
+              const dataRow = data[r]
+              if (dataRow) {
+                const { columnData } = columns[c + 1]
+
+                const compare = (dataRow as any)[columnData.key]
+                if (compare && compare.toString().includes(search)) {
+                  return { row: r, col: c }
+                }
+              }
+            }
+          }
+
+          return { row: -1, col: -1 }
+        },
+        [columns, data]
+      )
+
+      const searchText = useRef<string | null>(null)
+      const searchIndexRow = useRef(-1)
+      const searchIndexCol = useRef(-1)
+      const onSearch = useCallback(
+        (search: string): boolean => {
+          let initRow = 0
+          let initCol = 0
+
+          if (!searchText.current || searchText.current !== search) {
+            searchText.current = search
+            searchIndexRow.current = -1
+            searchIndexCol.current = -1
+          }
+
+          if (searchIndexRow.current > -1) {
+            if (searchIndexCol.current + 1 === columns.length) {
+              if (searchIndexRow.current + 1 === data.length) {
+                initRow = 0
+              } else {
+                initRow = searchIndexRow.current + 1
+              }
+            } else {
+              initRow = searchIndexRow.current
+            }
+          }
+
+          if (searchIndexCol.current > -1) {
+            if (searchIndexCol.current + 1 === columns.length) initCol = 0
+            else initCol = searchIndexCol.current + 1
+          }
+
+          const { row, col } = find(search, initRow, initCol)
+
+          searchIndexRow.current = row
+          searchIndexCol.current = col
+
+          if (searchIndexRow.current > -1 && searchIndexCol.current > -1) {
+            setActiveCell({
+              col: searchIndexCol.current,
+              row: searchIndexRow.current,
+            })
+          }
+
+          return searchIndexRow.current !== -1 && searchIndexCol.current !== -1
+        },
+        [
+          data,
+          searchText,
+          searchIndexRow,
+          searchIndexCol,
+          setActiveCell,
+          columns,
+          find,
+        ]
+      )
+
       const onContextMenu = useCallback(
         (event: MouseEvent) => {
           const clickInside =
@@ -1996,6 +2081,7 @@ export const DataSheetGrid = React.memo(
           duplicateRows,
           insertRowAfter,
           copyAll,
+          onSearch,
           data,
           isEditing,
           activeCell?.row,
@@ -2083,6 +2169,8 @@ export const DataSheetGrid = React.memo(
         CreateContextMenuItems,
         data,
         isEditing,
+        copyAll,
+        onSearch,
       ])
 
       const headerContext = useMemoObject<HeaderContextType<T>>({
@@ -2237,6 +2325,9 @@ export const DataSheetGrid = React.memo(
             return success
           }
           return true
+        },
+        search: (search: string) => {
+          return onSearch(search)
         },
       }))
 
