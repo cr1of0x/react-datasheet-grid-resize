@@ -103,3 +103,10 @@ export const encodeHtml = (str: string) => {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
 }
+
+export const setClipboard = async (type: string, text: string) => {
+  const blob = new Blob([text], { type })
+  const item = new window.ClipboardItem({ [type]: blob })
+  const data = [item]
+  await navigator.clipboard.write(data)
+}

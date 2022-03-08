@@ -40,6 +40,7 @@ import {
   parseTextPlainData,
   parseTextHtmlData,
   encodeHtml,
+  setClipboard,
 } from '../utils/copyPasting'
 import {
   getCell,
@@ -983,6 +984,51 @@ export const DataSheetGrid = React.memo(
         [activeCell, columns, data, editing, selection]
       )
       useDocumentEventListener('copy', onCopy)
+
+      const copyAll = useCallback(async () => {
+        if (!editing && activeCell) {
+          const copyData: Array<Array<number | string | null>> = []
+
+          for (let row = 0; row <= data.length; ++row) {
+            copyData.push([])
+
+            for (let col = 0; col <= columns.length - 2; ++col) {
+              const { copyValue = () => null } = columns[col + 1]
+              if (data[row]) {
+                copyData[row].push(
+                  copyValue({ rowData: data[row], rowIndex: row })
+                )
+              }
+            }
+          }
+
+          await setClipboard(
+            'text/plain',
+            copyData.map((row) => row.join('\t')).join('\n')
+          )
+
+          const header = columns.slice(1)
+
+          const tbl: string = `<table>
+          <tr>${header.map((c) => `<th>${c.title}</th>`).join('')}</tr>
+          ${copyData
+            .map(
+              (row) =>
+                `<tr>${row
+                  .map(
+                    (cell) =>
+                      `<td>${encodeHtml(String(cell ?? '')).replace(
+                        /\n/g,
+                        '<br/>'
+                      )}</td>`
+                  )
+                  .join('')}</tr>`
+            )
+            .join('')}</table>`
+
+          await setClipboard('text/html', tbl)
+        }
+      }, [activeCell, columns, data, editing])
 
       const onCut = useCallback(
         (event: ClipboardEvent) => {
@@ -1949,6 +1995,7 @@ export const DataSheetGrid = React.memo(
           deleteRows,
           duplicateRows,
           insertRowAfter,
+          copyAll,
           data,
           isEditing,
           activeCell?.row,

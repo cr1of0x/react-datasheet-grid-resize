@@ -1,4 +1,5 @@
 import { ContextMenuItem } from '../types'
+import { encodeHtml } from '../utils/copyPasting'
 
 export const CreateContextItems = <T extends any>(
   setContextMenuItems: (items: ContextMenuItem[]) => void,
@@ -14,15 +15,22 @@ export const CreateContextItems = <T extends any>(
     count?: any,
     firstActiveCol?: boolean
   ) => Promise<void>,
+  copyAll: () => void,
   data: T[],
   isGridEditing: boolean,
   row?: number,
   selectionMinRow?: number,
   selectionMaxRow?: number
 ) => {
-  console.log('context menu: ', row, selectionMinRow, selectionMaxRow)
-
   const items: ContextMenuItem[] = []
+
+  items.push({
+    type: 'COPY_CLIPBOARD',
+    action: () => {
+      closeContextMenu()
+      copyAll()
+    },
+  })
 
   if (selectionMaxRow !== undefined) {
     items.push({
@@ -101,8 +109,6 @@ export const CreateContextItems = <T extends any>(
       },
     })
   }
-
-  console.log('context items: ', items)
 
   setContextMenuItems(items)
   if (!items.length) {

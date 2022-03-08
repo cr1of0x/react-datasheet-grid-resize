@@ -229,6 +229,7 @@ export type DataSheetGridProps<T> = {
       count?: any,
       firstActiveCol?: boolean
     ) => Promise<void>,
+    copyAll: () => void,
     data: T[],
     isGridEditing: boolean,
     row?: number,
