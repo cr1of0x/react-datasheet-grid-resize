@@ -1255,7 +1255,7 @@ export const DataSheetGrid = React.memo(
           }
 
           // Detect if we pressed the left mouse button
-          isLeftMouseButtonPressed.current = leftClick
+          if (clickInside) isLeftMouseButtonPressed.current = leftClick
 
           if (
             event.target instanceof HTMLElement &&
@@ -1313,7 +1313,7 @@ export const DataSheetGrid = React.memo(
             cursorIndex.row >= selection.min.row &&
             cursorIndex.row <= selection.max.row
 
-          if (rightClick && !disableContextMenu) {
+          if (rightClick && clickInside && !disableContextMenu) {
             if (contRef.current) {
               const rect = contRef.current.getBoundingClientRect()
               const x = event.clientX - rect.left
@@ -1426,6 +1426,7 @@ export const DataSheetGrid = React.memo(
                 row = selectionCell.row
                 doNotScrollX = true
               }
+
               setSelectionCell({ col, row, doNotScrollX, doNotScrollY })
             } else {
               setSelectionCell(null)
@@ -2064,7 +2065,6 @@ export const DataSheetGrid = React.memo(
 
       const goTo = useCallback(
         (line: number) => {
-          console.log('goTo: ', line)
           if (!isEditing && line <= data.length) {
             setActiveCell((a) => {
               if (!a) return a
