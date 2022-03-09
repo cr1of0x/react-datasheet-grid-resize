@@ -16,7 +16,7 @@ export const CreateContextItems = <T extends any>(
     firstActiveCol?: boolean
   ) => Promise<void>,
   copyAll: () => void,
-  searchText: (text: string) => void,
+  searchText: (text: string, caseSensitive: boolean) => void,
   data: T[],
   isGridEditing: boolean,
   row?: number,
@@ -37,7 +37,7 @@ export const CreateContextItems = <T extends any>(
     type: 'SEARCH',
     action: () => {
       closeContextMenu()
-      searchText('a')
+      // searchText('a', false)
     },
   })
 

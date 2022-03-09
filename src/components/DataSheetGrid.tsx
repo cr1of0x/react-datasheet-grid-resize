@@ -1967,6 +1967,7 @@ export const DataSheetGrid = React.memo(
       const find = useCallback(
         (
           search: string,
+          caseSensitive: boolean,
           startingRow: number,
           startingCol: number
         ): { row: number; col: number } => {
@@ -1981,8 +1982,20 @@ export const DataSheetGrid = React.memo(
                 const { columnData } = columns[c + 1]
 
                 const compare = (dataRow as any)[columnData.key]
-                if (compare && compare.toString().includes(search)) {
-                  return { row: r, col: c }
+                if (caseSensitive) {
+                  if (compare && compare.toString().includes(search)) {
+                    return { row: r, col: c }
+                  }
+                } else {
+                  if (
+                    compare &&
+                    compare
+                      .toString()
+                      .toUpperCase()
+                      .includes(search.toUpperCase())
+                  ) {
+                    return { row: r, col: c }
+                  }
                 }
               }
             }
@@ -1997,7 +2010,7 @@ export const DataSheetGrid = React.memo(
       const searchIndexRow = useRef(-1)
       const searchIndexCol = useRef(-1)
       const onSearch = useCallback(
-        (search: string): boolean => {
+        (search: string, caseSensitive = false): boolean => {
           let initRow = 0
           let initCol = 0
 
@@ -2024,7 +2037,7 @@ export const DataSheetGrid = React.memo(
             else initCol = searchIndexCol.current + 1
           }
 
-          const { row, col } = find(search, initRow, initCol)
+          const { row, col } = find(search, caseSensitive, initRow, initCol)
 
           searchIndexRow.current = row
           searchIndexCol.current = col
@@ -2326,8 +2339,8 @@ export const DataSheetGrid = React.memo(
           }
           return true
         },
-        search: (search: string) => {
-          return onSearch(search)
+        search: (search: string, caseSensitive = false) => {
+          return onSearch(search, caseSensitive)
         },
       }))
 
