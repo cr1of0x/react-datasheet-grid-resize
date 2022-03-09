@@ -2062,6 +2062,19 @@ export const DataSheetGrid = React.memo(
         ]
       )
 
+      const goTo = useCallback(
+        (line: number) => {
+          console.log('goTo: ', line)
+          if (!isEditing && line <= data.length) {
+            setActiveCell((a) => {
+              if (!a) return a
+              return { ...a, row: line - 1 }
+            })
+          }
+        },
+        [setActiveCell, data, isEditing]
+      )
+
       const onContextMenu = useCallback(
         (event: MouseEvent) => {
           const clickInside =
@@ -2095,6 +2108,7 @@ export const DataSheetGrid = React.memo(
           insertRowAfter,
           copyAll,
           onSearch,
+          goTo,
           data,
           isEditing,
           activeCell?.row,
@@ -2341,6 +2355,9 @@ export const DataSheetGrid = React.memo(
         },
         search: (search: string, caseSensitive = false) => {
           return onSearch(search, caseSensitive)
+        },
+        goTo: (line: number) => {
+          goTo(line)
         },
       }))
 

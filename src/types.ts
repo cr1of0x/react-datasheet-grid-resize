@@ -231,6 +231,7 @@ export type DataSheetGridProps<T> = {
     ) => Promise<void>,
     copyAll: () => void,
     searchText: (text: string, caseSensitive: boolean) => void,
+    goTo: (line: number) => void,
     data: T[],
     isGridEditing: boolean,
     row?: number,
@@ -267,4 +268,5 @@ export type DataSheetGridRef = {
   setSelection: (selection: SelectionWithIdInput | null) => void
   submit: () => Promise<boolean>
   search: (search: string, caseSensitive: boolean) => boolean
+  goTo: (line: number) => void
 }

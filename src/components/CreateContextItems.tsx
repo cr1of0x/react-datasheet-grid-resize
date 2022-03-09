@@ -17,6 +17,7 @@ export const CreateContextItems = <T extends any>(
   ) => Promise<void>,
   copyAll: () => void,
   searchText: (text: string, caseSensitive: boolean) => void,
+  goTo: (line: number) => void,
   data: T[],
   isGridEditing: boolean,
   row?: number,
@@ -38,6 +39,14 @@ export const CreateContextItems = <T extends any>(
     action: () => {
       closeContextMenu()
       // searchText('a', false)
+    },
+  })
+
+  items.push({
+    type: 'GO_TO_LINE',
+    action: () => {
+      closeContextMenu()
+      // goTo(3)
     },
   })
 
