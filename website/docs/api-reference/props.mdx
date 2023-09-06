@@ -23,7 +23,7 @@ function App() => {
 ```
 
 ### value
-> Type: `Array`
+> Type: `T[]`
 
 Each element of the array is a row, elements could be anything like strings or objects.
 
@@ -90,11 +90,11 @@ function App() => {
 
 Used to customize the gutter column to the left of the grid. Mostly used to customize the width or the component that renders the gutter.
 
-To change the width of the gutter column you can simply specify the `width` key ([More details](columns#width)):
+To change the width of the gutter column you can simply specify the `basis` key ([More details](columns#basis)):
 ```tsx
 function App() => {
   return (
-    <DataSheetGrid gutterColumn={{ width: '0 0 60px' }} />
+    <DataSheetGrid gutterColumn={{ basis: 60 }} />
   )
 }
 ```
@@ -145,7 +145,7 @@ Height of a single row in pixels. All rows have the same height.
 > Type: `number`<br />
 > Default: `rowHeight`
 
-Height of the header row in pixels.
+Height of the header row in pixels. Passing the value `0` will completely hide the header row.
 
 
 
@@ -189,7 +189,31 @@ CSS class of the outer `<div />`.
 
 Style of the outer `<div />`.
 
+### rowClassName
+> Type: `string | ((opt: { rowData: T; rowIndex: number }) => string | undefined)`
+
+CSS class of a row, or a function that returns a CSS class for a given row.
+
+### cellClassName
+> Type: `string | ((opt: { rowData: unknown; rowIndex: number, columnId?: string }) => string | undefined)`
+
+CSS class of a cell, or a function that returns a CSS class for a given cell.
+This is exactly the same as specifying it [on the column](./columns#cellclassname), but `rowData` is of type `unknown` because we cannot know how the column wraps the value.
+
 ## Row behavior
+### rowKey
+> Type: `string | (({ rowData: T; rowIndex: number }) => string)`<br />
+> Default: `({ rowIndex }) => rowIndex`
+
+By default, rows use the row index as the `key`, this is not ideal when inserting / deleting rows in the middle of the grid:
+React will update all rows instead of adding / deleting a single one in the middle.
+For better performance and to avoid tricky behaviors, it is recommended to use some unique id for each row.
+
+You can specify a `string` that should be a key of the row object `<DataSheetGrid value={[{ id: 'foo' }, ...]} rowKey="id" />`.
+
+For more complex cases (nested properties, compound primary keys, non object rows...) you may specify a function
+that take the row object and row index as parameters.
+
 ### createRow
 > Type: `() => any`<br />
 > Default: `() => ({})`
@@ -198,21 +222,29 @@ A function that should return a new row object. This function is called once per
 or inserts new rows. Most often used to add default values and / or random ids to new rows.
 
 ### duplicateRow
-> Type: `({ rowData, rowIndex }) => any`<br />
+> Type: `({ rowData: T, rowIndex: number }) => any`<br />
 > Default: `({ rowData }) => ({ ...rowData })`
 
 A function that should return a new row object from an existing row. This function is called once per row every time the user duplicates rows. Most often used to override values and / or change uniq ids when duplicating rows.
 
 ## Customizable components
 ### addRowsComponent
+> Type: `FC<AddRowsComponentProps> | false`
+
 Used to replace the content of the "Add row" button below the grid. Most often used for translations,
 custom inputs,
-icons... View [default implementation](https://github.com/Equify/react-datasheet-grid/blob/master/src/components/AddRows.tsx)
-to start implementing your own from a solid base.
+icons...
+
+Passing `false` will hide the component.
+
+See more [details and examples](../i18n#add-button).
 
 ### contextMenuComponent
-Used to customize the context menu when right clicking. View [default implementation](https://github.com/Equify/react-datasheet-grid/blob/master/src/components/ContextMenu.tsx)
-to start implementing your own from a solid base..
+> Type: `FC<ContextMenuComponentProps>`
+
+Used to customize the context menu when right-clicking. 
+
+See more [details and examples](../i18n#context-menu).
 
 ## Callbacks
 Callbacks receive parameters of type `Cell`. `row` is the index of the row, `col` the index of the column, and `colId`

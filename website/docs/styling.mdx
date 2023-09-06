@@ -1,11 +1,27 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 import StyleGenerator from '../src/demos/styleGenerator'
 
 # Styling
 
 You can very easily customize the way DSG looks using CSS.
+
+## Custom classes
+You can add custom css classes to:
+- the [grid](./api-reference/props#classname), 
+- a [row](./api-reference/props#rowclassname), 
+- a [header cell](./api-reference/columns#headerclassname), 
+- a [cell](./api-reference/columns#cellclassname) of a column,
+- or a [cell](./api-reference/props#cellclassname) of the grid.
+
+Some even allow to specify a function instead of simply a string to dynamically apply a class based on the data:
+
+```tsx
+<DataSheetGrid
+  rowClassName={({ rowIndex }) => hasError(rowIndex) ? 'row-error' : null }
+/>
+```
 
 ## Custom properties
 
@@ -50,5 +66,5 @@ If you want to override a single DSG in your app you can directly use the style 
 
 ## Override more specific CSS
 
-If custom properties do not allow you to customize what you need, you can manually override any CSS classes.
-All classes are prefixed with `.dsg-`. See style [reference](https://github.com/Equify/react-datasheet-grid/blob/master/src/style.css).
+If custom properties do not allow you to customize what you need, you can manually override any CSS class.
+All classes are prefixed with `.dsg-`. See style [reference](https://github.com/nick-keller/react-datasheet-grid/blob/master/src/style.css).

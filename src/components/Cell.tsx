@@ -1,24 +1,26 @@
 import React, { FC, useEffect, useState } from 'react'
 import cx from 'classnames'
-import { Column } from '../types'
 
 export const Cell: FC<{
   gutter: boolean
   stickyRight: boolean
   disabled?: boolean
-  column: Column<any, any, any>
-  className: string
+  className?: string
   active?: boolean
   editing?: boolean
+  children?: any
+  width: number
+  left: number
 }> = ({
   children,
   gutter,
   stickyRight,
-  column,
   active,
   editing,
   disabled,
   className,
+  width,
+  left,
 }) => {
   return (
     <div
@@ -33,9 +35,8 @@ export const Cell: FC<{
         className
       )}
       style={{
-        flex: String(column.width),
-        minWidth: column.minWidth,
-        maxWidth: column.maxWidth,
+        width,
+        left: stickyRight ? undefined : left,
       }}
     >
       {children}

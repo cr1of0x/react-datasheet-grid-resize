@@ -12,22 +12,13 @@ import {
   ContextMenuItem,
   DataSheetGridProps,
   DataSheetGridRef,
-  HeaderContextType,
-  ListItemData,
   Operation,
   OperationSubmit,
   Selection,
-  SelectionContextType,
 } from '../types'
-import { VariableSizeList } from 'react-window'
-import { Row } from './Row'
 import { useColumnWidths } from '../hooks/useColumnWidths'
 import { useResizeDetector } from 'react-resize-detector'
-import { InnerContainer } from './InnerContainer'
-import { HeaderContext } from '../contexts/HeaderContext'
 import { useColumns } from '../hooks/useColumns'
-import { useMemoObject } from '../hooks/useMemoObject'
-import { SelectionContext } from '../contexts/SelectionContext'
 import { useEdges } from '../hooks/useEdges'
 import { useDeepEqualState } from '../hooks/useDeepEqualState'
 import { useDocumentEventListener } from '../hooks/useDocumentEventListener'
@@ -37,19 +28,23 @@ import { useDebounceState } from '../hooks/useDebounceState'
 import deepEqual from 'fast-deep-equal'
 import { ContextMenu } from './ContextMenu'
 import {
-  parseTextPlainData,
-  parseTextHtmlData,
   encodeHtml,
   setClipboard,
-} from '../utils/copyPasting'
+  parseTextHtmlData,
+  parseTextPlainData,
+} from '../utils/copyPasting';
+
 import {
   getCell,
   getCellWithId,
   getSelection,
   getSelectionWithId,
 } from '../utils/typeCheck'
-import { getAllTabbableElements } from '../utils/tab'
-import { CreateContextItems } from './CreateContextItems'
+import { getAllTabbableElements } from '../utils/tab';
+import { CreateContextItems } from './CreateContextItems';
+import { Grid } from './Grid';
+import { SelectionRect } from './SelectionRect';
+import { useRowHeights } from '../hooks/useRowHeights';
 
 const DEFAULT_DATA: any[] = []
 const DEFAULT_COLUMNS: Column<any, any, any>[] = []
@@ -77,9 +72,10 @@ export const DataSheetGrid = React.memo(
         onRowSubmit = DEFAULT_EMPTY_CALLBACK,
         columns: rawColumns = DEFAULT_COLUMNS,
         rowHeight = 40,
-        headerRowHeight = rowHeight,
+        headerRowHeight = typeof rowHeight === 'number' ? rowHeight : 40,
         gutterColumn,
         stickyRightColumn,
+        rowKey,
         addRowsComponent: AddRowsComponent = AddRows,
         footerComponent: FooterComponent,
         isRowEmpty,
@@ -100,6 +96,7 @@ export const DataSheetGrid = React.memo(
         onDoubleClickRow = DEFAULT_EMPTY_CALLBACK,
         rowClassName,
         isEditing = false,
+        cellClassName,
       }: DataSheetGridProps<T>,
       ref: React.ForwardedRef<DataSheetGridRef>
     ): JSX.Element => {
@@ -111,9 +108,8 @@ export const DataSheetGrid = React.memo(
         stickyRightColumn
       )
       const hasStickyRightColumn = Boolean(stickyRightColumn)
-      const listRef = useRef<VariableSizeList>(null)
-      const innerRef = useRef<HTMLElement>(null)
-      const outerRef = useRef<HTMLElement>(null)
+      const innerRef = useRef<HTMLDivElement>(null)
+      const outerRef = useRef<HTMLDivElement>(null)
       const beforeTabIndexRef = useRef<HTMLDivElement>(null)
       const afterTabIndexRef = useRef<HTMLDivElement>(null)
       // Control the data of a row edited before submitting
@@ -150,14 +146,18 @@ export const DataSheetGrid = React.memo(
       // Default value is 1 for the border
       const [heightDiff, setHeightDiff] = useDebounceState(1, 100)
 
+      const { getRowSize, totalSize, getRowIndex } = useRowHeights({
+        value: data,
+        rowHeight,
+      })
+
       // Height of the list (including scrollbars and borders) to display
       // const displayHeight = Math.min(
       //   maxHeight,
       //   headerRowHeight + data.length * rowHeight + heightDiff
       // )
-      const displayHeight =
-        maxHeight ??
-        Math.min(400, headerRowHeight + data.length * rowHeight + heightDiff)
+      const displayHeight = maxHeight ??
+      Math.min(400, headerRowHeight + data.length * rowHeight + heightDiff, headerRowHeight + totalSize(maxHeight) + heightDiff);
 
       // Width and height of the scrollable area
       const { width, height } = useResizeDetector({
@@ -181,6 +181,7 @@ export const DataSheetGrid = React.memo(
       const [contextMenu, setContextMenu] = useState<{
         x: number
         y: number
+        cursorIndex: Cell
       } | null>(null)
 
       // Items of the context menu
@@ -325,10 +326,7 @@ export const DataSheetGrid = React.memo(
 
             return {
               col: columnRights.findIndex((right) => x < right) - 1,
-              row: Math.min(
-                data.length - 1,
-                Math.max(-1, Math.floor((y - headerRowHeight) / rowHeight))
-              ),
+              row: getRowIndex(y - headerRowHeight),
             }
           }
 
@@ -341,8 +339,8 @@ export const DataSheetGrid = React.memo(
           getInnerBoundingClientRect,
           getOuterBoundingClientRect,
           headerRowHeight,
-          rowHeight,
           hasStickyRightColumn,
+          getRowIndex,
         ]
       )
 
@@ -719,18 +717,22 @@ export const DataSheetGrid = React.memo(
 
           if (!cell.doNotScrollY) {
             // Align top
-            const topMax = cell.row * rowHeight
+            const topMax = getRowSize(cell.row).top
             // Align bottom
             const topMin =
-              (cell.row + 1) * rowHeight + headerRowHeight - height + 1
+              getRowSize(cell.row).top +
+              getRowSize(cell.row).height +
+              headerRowHeight -
+              height +
+              1
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            const scrollTop = listRef.current?.state.scrollOffset as number
+            const scrollTop = outerRef.current!.scrollTop
 
             if (scrollTop > topMax) {
-              listRef.current?.scrollTo(topMax)
+              outerRef.current!.scrollTop = topMax
             } else if (scrollTop < topMin) {
-              listRef.current?.scrollTo(topMin)
+              outerRef.current!.scrollTop = topMin
             }
           }
 
@@ -764,10 +766,10 @@ export const DataSheetGrid = React.memo(
         [
           height,
           width,
-          rowHeight,
           headerRowHeight,
           columnRights,
           columnWidths,
+          getRowSize,
           hasStickyRightColumn,
         ]
       )
@@ -1236,8 +1238,8 @@ export const DataSheetGrid = React.memo(
             return
           }
 
-          const rightClick = event.button === 2
-          const leftClick = event.button === 0
+          const rightClick = event.button === 2 || (event.button === 0 && event.ctrlKey)
+
           const clickInside =
             innerRef.current?.contains(event.target as Node) || false
 
@@ -1313,13 +1315,17 @@ export const DataSheetGrid = React.memo(
             cursorIndex.row >= selection.min.row &&
             cursorIndex.row <= selection.max.row
 
-          if (rightClick && clickInside && !disableContextMenu) {
-            if (contRef.current) {
-              const rect = contRef.current.getBoundingClientRect()
-              const x = event.clientX - rect.left
-              const y = event.clientY - rect.top
-              setContextMenu({ x: x, y: y })
-            }
+            if (rightClick && !disableContextMenu) {
+              if (contRef.current) {
+                const rect = contRef.current.getBoundingClientRect()
+                const x = event.clientX - rect.left
+                const y = event.clientY - rect.top
+                setContextMenu({
+                  x: x,
+                  y: y,
+                  cursorIndex: cursorIndex as Cell,
+                })
+              }
           }
 
           if (
@@ -1689,6 +1695,10 @@ export const DataSheetGrid = React.memo(
             return
           }
 
+          if (event.isComposing) {
+            return
+          }
+
           // Tab from last cell of a row
           if (
             event.key === 'Tab' &&
@@ -1852,7 +1862,7 @@ export const DataSheetGrid = React.memo(
           } else if (event.key === 'Escape') {
             setEditing(false)
           } else if (
-            event.key === 'Enter' &&
+            (event.key === 'Enter' || event.key === 'F2') &&
             !event.ctrlKey &&
             !event.metaKey &&
             !event.altKey &&
@@ -2430,28 +2440,48 @@ export const DataSheetGrid = React.memo(
               setActiveCell({ col: 0, row: 0 })
             }}
           />
-          <HeaderContext.Provider value={headerContext}>
-            <SelectionContext.Provider value={selectionContext}>
-              <VariableSizeList<ListItemData<T>>
-                className="dsg-container"
-                ref={listRef}
-                width={'100%'}
-                height={displayHeight - (footerRef.current?.clientHeight ?? 0)}
-                itemCount={data.length + 1}
-                itemSize={itemSize}
-                estimatedItemSize={rowHeight}
-                itemData={itemData}
-                outerRef={outerRef}
-                innerRef={innerRef}
-                innerElementType={InnerContainer}
-                children={Row}
-                useIsScrolling={columns.some(
-                  ({ renderWhenScrolling }) => !renderWhenScrolling
-                )}
-              />
-            </SelectionContext.Provider>
-          </HeaderContext.Provider>
-
+          <Grid
+            columns={columns}
+            outerRef={outerRef}
+            columnWidths={columnWidths}
+            hasStickyRightColumn={hasStickyRightColumn}
+            displayHeight={displayHeight}
+            data={data}
+            fullWidth={fullWidth}
+            headerRowHeight={headerRowHeight}
+            activeCell={activeCell}
+            innerRef={innerRef}
+            rowHeight={getRowSize}
+            rowKey={rowKey}
+            selection={selection}
+            rowClassName={rowClassName}
+            editing={editing}
+            getContextMenuItems={getContextMenuItems}
+            setRowData={setRowData}
+            deleteRows={deleteRows}
+            insertRowAfter={insertRowAfter}
+            duplicateRows={duplicateRows}
+            stopEditing={stopEditing}
+            cellClassName={cellClassName}
+          >
+            <SelectionRect
+              columnRights={columnRights}
+              columnWidths={columnWidths}
+              activeCell={activeCell}
+              selection={selection}
+              headerRowHeight={headerRowHeight}
+              rowHeight={getRowSize}
+              hasStickyRightColumn={hasStickyRightColumn}
+              dataLength={data.length}
+              viewHeight={height}
+              viewWidth={width}
+              contentWidth={fullWidth ? undefined : contentWidth}
+              edges={edges}
+              editing={editing}
+              isCellDisabled={isCellDisabled}
+              expandSelection={expandSelection}
+            />
+          </Grid>
           <div
             ref={afterTabIndexRef}
             tabIndex={rawColumns.length && data.length ? 0 : undefined}
@@ -2462,21 +2492,21 @@ export const DataSheetGrid = React.memo(
                 row: data.length - 1,
               })
             }}
-          />
-          {FooterComponent && (
+          />{FooterComponent && (
             <div ref={footerRef}>
               <FooterComponent />
             </div>
           )}
-          {showAddRowsComponent && !lockRows && (
-            <AddRowsComponent
-              addRows={(count) => insertRowAfter(data.length - 1, count)}
-            />
+          {!lockRows && AddRowsComponent && (
+                <AddRowsComponent
+                addRows={(count) => insertRowAfter(data.length - 1, count)}
+              />
           )}
           {contextMenu && contextMenuItems.length > 0 && (
             <ContextMenuComponent
               clientX={contextMenu.x}
               clientY={contextMenu.y}
+              cursorIndex={contextMenu.cursorIndex}
               items={contextMenuItems}
               close={() => setContextMenu(null)}
               isGridEditing={isEditing}

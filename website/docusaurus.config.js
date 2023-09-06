@@ -9,9 +9,14 @@ module.exports = {
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'Equify', // Usually your GitHub org/user name.
+  organizationName: 'nick-keller', // Usually your GitHub org/user name.
   projectName: 'react-datasheet-grid', // Usually your repo name.
   themeConfig: {
+    announcementBar: {
+      content:
+        '⭐️ <b>If you like React-Datasheet-Grid, give it a star on <a target="_blank" href="https://github.com/nick-keller/react-datasheet-grid">GitHub</a> and follow us on <a target="_blank" href="https://twitter.com/NicolasKa3">Twitter</a>!</b>',
+      backgroundColor: '#8bd6c4',
+    },
     navbar: {
       title: 'React Datasheet Grid',
       items: [
@@ -32,7 +37,7 @@ module.exports = {
           position: 'right',
         },
         {
-          href: 'https://github.com/Equify/react-datasheet-grid',
+          href: 'https://github.com/nick-keller/react-datasheet-grid',
           label: 'GitHub',
           position: 'right',
         },
@@ -51,7 +56,7 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/Equify/react-datasheet-grid/edit/master/website/',
+            'https://github.com/nick-keller/react-datasheet-grid/edit/master/website/',
         },
         theme: {
           customCss: [

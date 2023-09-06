@@ -31,4 +31,10 @@ export { floatColumn } from './columns/floatColumn'
 export { intColumn } from './columns/intColumn'
 export { percentColumn } from './columns/percentColumn'
 export { dateColumn } from './columns/dateColumn'
+export { isoDateColumn } from './columns/isoDateColumn'
 export { keyColumn } from './columns/keyColumn'
+export { createAddRowsComponent } from './components/AddRows'
+export {
+  createContextMenuComponent,
+  defaultRenderItem as renderContextMenuItem,
+} from './components/ContextMenu'

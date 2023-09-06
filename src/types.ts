@@ -1,7 +1,5 @@
 import React from 'react'
 
-export type ColumnWidth = string | number
-
 export type Cell = {
   col: number
   row: number
@@ -19,7 +17,7 @@ export type CellProps<T, C> = {
   align?: AlignSetting
   columnData: C
   setRowData: (rowData: T) => void
-  stopEditing: (opts?: { nextRow: boolean }) => void
+  stopEditing: (opts?: { nextRow?: boolean }) => void
   insertRowBelow: () => void
   duplicateRow: () => void
   deleteRow: () => void
@@ -32,11 +30,18 @@ export type Column<T, C, PasteValue> = {
   id?: string
   headerClassName?: string
   title?: React.ReactNode
-  width: ColumnWidth
+  /** @deprecated Use `basis`, `grow`, and `shrink` instead */
+  width?: string | number
+  basis: number
+  grow: number
+  shrink: number
   minWidth: number
   maxWidth?: number
+<<<<<<< HEAD
   align?: AlignSetting
   renderWhenScrolling: boolean
+=======
+>>>>>>> a3f5701
   component: CellComponent<T, C>
   columnData?: C
   disableKeys: boolean
@@ -46,7 +51,11 @@ export type Column<T, C, PasteValue> = {
     | ((opt: { rowData: T; rowIndex: number; isCreating: boolean }) => boolean)
   cellClassName?:
     | string
-    | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
+    | ((opt: {
+        rowData: T
+        rowIndex: number
+        columnId?: string
+      }) => string | undefined)
   keepFocus: boolean
   deleteValue: (opt: { rowData: T; rowIndex: number }) => T
   copyValue: (opt: { rowData: T; rowIndex: number }) => number | string | null
@@ -55,6 +64,7 @@ export type Column<T, C, PasteValue> = {
   isCellEmpty: (opt: { rowData: T; rowIndex: number }) => boolean
 }
 
+<<<<<<< HEAD
 export type ListItemData<T> = {
   data: T[]
   contentWidth?: number
@@ -93,13 +103,15 @@ export type HeaderContextType<T> = {
   activeColMax?: number
 }
 
+=======
+>>>>>>> a3f5701
 export type SelectionContextType = {
   columnRights?: number[]
   columnWidths?: number[]
   activeCell: Cell | null
   selection: Selection | null
   dataLength: number
-  rowHeight: number
+  rowHeight: (index: number) => { height: number; top: number }
   hasStickyRightColumn: boolean
   editing: boolean
   isCellDisabled: (cell: Cell) => boolean
@@ -111,6 +123,7 @@ export type SelectionContextType = {
   expandSelection: number | null
 }
 
+<<<<<<< HEAD
 export type RowProps<T> = {
   index: number
   data: T
@@ -136,10 +149,19 @@ export type RowProps<T> = {
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
 }
 
+=======
+>>>>>>> a3f5701
 export type SimpleColumn<T, C> = Partial<
   Pick<
     Column<T, C, string>,
-    'title' | 'maxWidth' | 'minWidth' | 'width' | 'component' | 'columnData'
+    | 'title'
+    | 'maxWidth'
+    | 'minWidth'
+    | 'basis'
+    | 'grow'
+    | 'shrink'
+    | 'component'
+    | 'columnData'
   >
 >
 
@@ -168,6 +190,7 @@ export type ContextMenuComponentProps = {
   clientX: number
   clientY: number
   items: ContextMenuItem[]
+  cursorIndex: Cell
   close: () => void
   isGridEditing: boolean
 }
@@ -190,6 +213,13 @@ export type DataSheetGridProps<T> = {
   rowClassName?:
     | string
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
+  cellClassName?:
+    | string
+    | ((opt: {
+        rowData: unknown
+        rowIndex: number
+        columnId?: string
+      }) => string | undefined)
   onChange?: (value: T[], operations: Operation[]) => void
   onRowSubmit?: (
     prevValue: T[],
@@ -200,12 +230,19 @@ export type DataSheetGridProps<T> = {
   columns?: Partial<Column<T, any, any>>[]
   gutterColumn?: SimpleColumn<T, any> | false
   stickyRightColumn?: SimpleColumn<T, any>
+  rowKey?: string | ((opts: { rowData: T; rowIndex: number }) => string)
   height?: number
-  rowHeight?: number
+  rowHeight?: number | ((opt: { rowData: T; rowIndex: number }) => number)
   headerRowHeight?: number
+<<<<<<< HEAD
   isRowEmpty?: (rowData: T, isCreating: boolean) => boolean
   addRowsComponent?: (props: AddRowsComponentProps) => JSX.Element
   footerComponent?: (props: any) => JSX.Element
+=======
+  addRowsComponent?:
+    | ((props: AddRowsComponentProps) => React.ReactElement | null)
+    | false
+>>>>>>> a3f5701
   createRow?: () => T
   duplicateRow?: (opts: { rowData: T; rowIndex: number }) => T
   autoAddRow?: boolean
@@ -213,6 +250,7 @@ export type DataSheetGridProps<T> = {
   showAddRowsComponent?: boolean
   disableContextMenu?: boolean
   disableExpandSelection?: boolean
+<<<<<<< HEAD
   isLoading?: boolean
   contextMenuComponent?: (props: ContextMenuComponentProps) => JSX.Element
   createContextMenuItems?: (
@@ -238,6 +276,11 @@ export type DataSheetGridProps<T> = {
     selectionMinRow?: number,
     selectionMaxRow?: number
   ) => void
+=======
+  contextMenuComponent?: (
+    props: ContextMenuComponentProps
+  ) => React.ReactElement | null
+>>>>>>> a3f5701
   onFocus?: (opts: { cell: CellWithId }) => void
   onBlur?: (opts: { cell: CellWithId }) => void
   onActiveCellChange?: (opts: { cell: CellWithId | null }) => void

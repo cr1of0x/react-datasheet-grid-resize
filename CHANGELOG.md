@@ -1,5 +1,67 @@
 # Change Log
 
+## 4.8.1
+> Date: 2022-11-23
+### Fixed
+- Duplicate characters issue when typing in Korean or other composable languages
+
+## 4.8.0
+> Date: 2022-11-18
+### Added
+- Added `isoDateColumn` to work with strings instead of Date objects
+### Changed
+- `isoDateColumn` and `dateColumn` now hide the calendar icon when not active for a better visual experience
+
+## 4.7.0
+> Date: 2022-11-06
+### Added
+- Now export `createAddRowsComponent`, `renderContextMenuItem`, and `createContextMenuComponent` for easier i18n
+- Added `cellClassName` prop to DSG itself
+
+## 4.6.0
+> Date: 2022-11-04
+### Changed
+- `width` is now deprecated for columns, you should now use directly `basis`, `grow`, and `shrink`.
+    Width computation is now done internally in JS and does not rely on the browser.
+- Migrated from `react-window` to `react-virtual`. As a result columns are now virtualized as well.
+### Added
+- Support for `Ctrl`+`Left click` to open the context menu
+
+## 4.5.0
+> Date: 2022-09-28
+### Added
+- `headerRowHeight` now supports 0 as a value and completely hides the header row
+- `checkboxColumn` now disables the checkbox when the cell itself is disabled
+- `addRowsComponent` now supports `false` as a value to hide the component
+- `cellClassName` now receives `columnId`
+
+## 4.4.2
+> Date: 2022-07-31
+### Changed
+- Transferred ownership of the repo
+
+## 4.4.1
+> Date: 2022-05-31
+### Fixed
+- Fix build, previous changes are now present
+
+## 4.4.0
+> Date: 2022-05-11
+### Added
+- Add `rowKey` prop to handle complex edge cases when inserting / deleting rows in the middle of the grid
+
+## 4.3.0
+> Date: 2022-05-03
+### Added
+- Add support for React 18
+
+## 4.2.0
+> Date: 2022-04-22
+### Added
+- Add support for `F2` key to start editing a cell, like in Excel
+- The context menu component now has an extra prop `cursorIndex`, which is a `Cell`, 
+  that holds the information about which cell was right-clicked on. `-1` means header or gutter column
+
 ## 4.1.1
 > Date: 2022-02-23
 ### Changed

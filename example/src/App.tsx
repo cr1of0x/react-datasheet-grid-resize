@@ -73,8 +73,8 @@ function App() {
     {
       ...keyColumn<Row, 'active'>('active', checkboxColumn),
       title: 'Active',
-      width: 0.5,
       align: 'start',
+      grow: 0.5,
     },
     {
       ...keyColumn<Row, 'firstName'>('firstName', textColumn),
@@ -84,7 +84,7 @@ function App() {
     {
       ...keyColumn<Row, 'lastName'>('lastName', textColumn),
       title: 'Last name',
-      width: 2,
+      grow: 2,
       // required: true,
       disableKeys: true,
     },
@@ -110,7 +110,7 @@ function App() {
       await sleep(1000)
       // setData(newValue)
 
-      let rdata = newValue[rowIndex]
+      const rdata = newValue[rowIndex]
       setData([
         ...newValue?.slice(0, rowIndex),
         { ...rdata, comptador: 3 },

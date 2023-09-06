@@ -15,7 +15,7 @@ const KeyComponent: CellComponent<any, ColumnData> = ({
 
   // We wrap the setRowData function to assign the value to the desired key
   const setKeyData = useCallback(
-    (value) => {
+    (value: any) => {
       setRowData({ ...rowDataRef.current, [key]: value })
     },
     [key, setRowData]
@@ -74,9 +74,9 @@ export const keyColumn = <
       : column.disabled,
   cellClassName:
     typeof column.cellClassName === 'function'
-      ? ({ rowData, rowIndex }) => {
+      ? ({ rowData, rowIndex, columnId }) => {
           return typeof column.cellClassName === 'function'
-            ? column.cellClassName({ rowData: rowData[key], rowIndex })
+            ? column.cellClassName({ rowData: rowData[key], rowIndex, columnId })
             : column.cellClassName ?? undefined
         }
       : column.cellClassName,
