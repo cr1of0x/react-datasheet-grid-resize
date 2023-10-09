@@ -37,7 +37,7 @@ export const defaultRenderItem = (item: ContextMenuItem, isGridEditing: boolean)
 
 export const createContextMenuComponent =
   (
-    renderItem: (item: ContextMenuItem, isGridEditing: boolean) => JSX.Element = defaultRenderItem
+    renderItem: (item: ContextMenuItem, isGridEditing: boolean) => string | JSX.Element = defaultRenderItem
   ): FC<ContextMenuComponentProps & { isGridEditing: boolean }> =>
   // eslint-disable-next-line react/display-name
   ({ clientX, clientY, items, close, isGridEditing }) => {

@@ -27,44 +27,33 @@ export type CellProps<T, C> = {
 export type CellComponent<T, C> = (props: CellProps<T, C>) => JSX.Element
 
 export type Column<T, C, PasteValue> = {
-  id?: string
-  headerClassName?: string
-  title?: React.ReactNode
+  id?: string;
+  headerClassName?: string;
+  title?: React.ReactNode;
   /** @deprecated Use `basis`, `grow`, and `shrink` instead */
-  width?: string | number
-  basis: number
-  grow: number
-  shrink: number
-  minWidth: number
-  maxWidth?: number
-<<<<<<< HEAD
-  align?: AlignSetting
-  renderWhenScrolling: boolean
-=======
->>>>>>> a3f5701
-  component: CellComponent<T, C>
-  columnData?: C
-  disableKeys: boolean
-  required: boolean
-  disabled:
-    | boolean
-    | ((opt: { rowData: T; rowIndex: number; isCreating: boolean }) => boolean)
-  cellClassName?:
-    | string
-    | ((opt: {
-        rowData: T
-        rowIndex: number
-        columnId?: string
-      }) => string | undefined)
-  keepFocus: boolean
-  deleteValue: (opt: { rowData: T; rowIndex: number }) => T
-  copyValue: (opt: { rowData: T; rowIndex: number }) => number | string | null
-  pasteValue: (opt: { rowData: T; value: PasteValue; rowIndex: number }) => T
-  prePasteValues: (values: string[]) => PasteValue[] | Promise<PasteValue[]>
-  isCellEmpty: (opt: { rowData: T; rowIndex: number }) => boolean
-}
+  width?: string | number;
+  basis: number;
+  grow: number;
+  shrink: number;
+  minWidth: number;
+  maxWidth?: number;
+  align?: AlignSetting;
+  renderWhenScrolling: boolean;
+  component: CellComponent<T, C>;
+  columnData?: C;
+  disableKeys: boolean;
+  required: boolean;
+  disabled: boolean | ((opt: { rowData: T; rowIndex: number; isCreating: boolean }) => boolean);
+  cellClassName?: string | ((opt: { rowData: T; rowIndex: number; columnId?: string }) => string | undefined);
+  keepFocus: boolean;
+  deleteValue: (opt: { rowData: T; rowIndex: number }) => T;
+  copyValue: (opt: { rowData: T; rowIndex: number }) => number | string | null;
+  pasteValue: (opt: { rowData: T; value: PasteValue; rowIndex: number }) => T;
+  prePasteValues: (values: string[]) => PasteValue[] | Promise<PasteValue[]>;
+  isCellEmpty: (opt: { rowData: T; rowIndex: number }) => boolean;
+};
 
-<<<<<<< HEAD
+
 export type ListItemData<T> = {
   data: T[]
   contentWidth?: number
@@ -103,8 +92,6 @@ export type HeaderContextType<T> = {
   activeColMax?: number
 }
 
-=======
->>>>>>> a3f5701
 export type SelectionContextType = {
   columnRights?: number[]
   columnWidths?: number[]
@@ -123,7 +110,6 @@ export type SelectionContextType = {
   expandSelection: number | null
 }
 
-<<<<<<< HEAD
 export type RowProps<T> = {
   index: number
   data: T
@@ -149,8 +135,6 @@ export type RowProps<T> = {
     | ((opt: { rowData: T; rowIndex: number }) => string | undefined)
 }
 
-=======
->>>>>>> a3f5701
 export type SimpleColumn<T, C> = Partial<
   Pick<
     Column<T, C, string>,
@@ -228,65 +212,31 @@ export type DataSheetGridProps<T> = {
     operation: OperationSubmit
   ) => Promise<boolean>
   columns?: Partial<Column<T, any, any>>[]
+  footerComponent: any,
   gutterColumn?: SimpleColumn<T, any> | false
   stickyRightColumn?: SimpleColumn<T, any>
   rowKey?: string | ((opts: { rowData: T; rowIndex: number }) => string)
   height?: number
   rowHeight?: number | ((opt: { rowData: T; rowIndex: number }) => number)
-  headerRowHeight?: number
-<<<<<<< HEAD
-  isRowEmpty?: (rowData: T, isCreating: boolean) => boolean
-  addRowsComponent?: (props: AddRowsComponentProps) => JSX.Element
-  footerComponent?: (props: any) => JSX.Element
-=======
-  addRowsComponent?:
-    | ((props: AddRowsComponentProps) => React.ReactElement | null)
-    | false
->>>>>>> a3f5701
-  createRow?: () => T
-  duplicateRow?: (opts: { rowData: T; rowIndex: number }) => T
-  autoAddRow?: boolean
-  lockRows?: boolean
-  showAddRowsComponent?: boolean
-  disableContextMenu?: boolean
-  disableExpandSelection?: boolean
-<<<<<<< HEAD
-  isLoading?: boolean
-  contextMenuComponent?: (props: ContextMenuComponentProps) => JSX.Element
-  createContextMenuItems?: (
-    setContextMenuItems: (items: ContextMenuItem[]) => void,
-    closeContextMenu: () => void,
-    deleteRows: (
-      rowMin: number,
-      rowMax?: number,
-      changeActiveCell?: boolean
-    ) => Promise<void>,
-    duplicateRows: (rowMin: number, rowMax?: number) => void,
-    insertRowAfter: (
-      row: number,
-      count?: any,
-      firstActiveCol?: boolean
-    ) => Promise<void>,
-    copyAll: () => void,
-    searchText: (text: string, caseSensitive: boolean) => void,
-    goTo: (line: number) => void,
-    data: T[],
-    isGridEditing: boolean,
-    row?: number,
-    selectionMinRow?: number,
-    selectionMaxRow?: number
-  ) => void
-=======
-  contextMenuComponent?: (
-    props: ContextMenuComponentProps
-  ) => React.ReactElement | null
->>>>>>> a3f5701
-  onFocus?: (opts: { cell: CellWithId }) => void
-  onBlur?: (opts: { cell: CellWithId }) => void
-  onActiveCellChange?: (opts: { cell: CellWithId | null }) => void
-  onSelectionChange?: (opts: { selection: SelectionWithId | null }) => void
-  onDoubleClickRow?: (dataRow: T) => void
-  isEditing?: boolean
+  headerRowHeight?: number;
+  isRowEmpty?: (rowData: T, isCreating: boolean) => boolean;
+  addRowsComponent?: ((props: AddRowsComponentProps) => JSX.Element) | false;
+  createRow?: () => T;
+  duplicateRow?: (opts: { rowData: T; rowIndex: number }) => T;
+  autoAddRow?: boolean;
+  lockRows?: boolean;
+  showAddRowsComponent?: boolean;
+  disableContextMenu?: boolean;
+  disableExpandSelection?: boolean;
+  isLoading?: boolean;
+  contextMenuComponent?: (props: ContextMenuComponentProps) => JSX.Element | null;
+  createContextMenuItems?: (/* your types */) => void; // assuming you need this
+  onFocus?: (opts: { cell: CellWithId }) => void;
+  onBlur?: (opts: { cell: CellWithId }) => void;
+  onActiveCellChange?: (opts: { cell: CellWithId | null }) => void;
+  onSelectionChange?: (opts: { selection: SelectionWithId | null }) => void;
+  onDoubleClickRow?: (dataRow: T) => void;
+  isEditing?: boolean;
 }
 
 type CellWithIdInput = {

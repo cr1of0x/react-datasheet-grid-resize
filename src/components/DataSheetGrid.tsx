@@ -76,7 +76,7 @@ export const DataSheetGrid = React.memo(
         gutterColumn,
         stickyRightColumn,
         rowKey,
-        addRowsComponent: AddRowsComponent = AddRows,
+        addRowsComponent: AddRowsComponent = AddRows as any,
         footerComponent: FooterComponent,
         isRowEmpty,
         createRow = DEFAULT_CREATE_ROW as () => T,
@@ -86,8 +86,8 @@ export const DataSheetGrid = React.memo(
         disableExpandSelection = true,
         isLoading = false,
         duplicateRow = DEFAULT_DUPLICATE_ROW,
-        contextMenuComponent: ContextMenuComponent = ContextMenu,
-        createContextMenuItems: CreateContextMenuItems = CreateContextItems,
+        contextMenuComponent: ContextMenuComponent = ContextMenu as any,
+        createContextMenuItems: CreateContextMenuItems = CreateContextItems as any,
         disableContextMenu: disableContextMenuRaw = false,
         onFocus = DEFAULT_EMPTY_CALLBACK,
         onBlur = DEFAULT_EMPTY_CALLBACK,
@@ -1257,7 +1257,7 @@ export const DataSheetGrid = React.memo(
           }
 
           // Detect if we pressed the left mouse button
-          if (clickInside) isLeftMouseButtonPressed.current = leftClick
+          if (clickInside) isLeftMouseButtonPressed.current = rightClick
 
           if (
             event.target instanceof HTMLElement &&
@@ -1871,7 +1871,7 @@ export const DataSheetGrid = React.memo(
             setSelectionCell(null)
             if (editing || isCellDisabled(activeCell)) {
               if (!columns[activeCell.col + 1].disableKeys) {
-                stopEditing({ nextRow: false })
+                stopEditing({ nextRow: false } as any)
               }
             } else if (!isCellDisabled(activeCell)) {
               lastEditingCellRef.current = activeCell
